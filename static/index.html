@@ -1,0 +1,1658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AK Voice Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b0c;--panel:#111113;--card:#16161a;--field:#0e0e10;--hover:#1c1c21;--line:#24242a;--line2:#33333b;
+    --text:#ededef;--muted:#8e8e98;--dim:#5f5f69;--orange:#fd9400;--orange-soft:rgba(253,148,0,.12);
+    --ok:#3ecf8e;--err:#ff6b6b;--info:#7ab4ff;--blue:#4d9fff;--radius:12px;
+    --urdu:"Noto Nastaliq Urdu","Jameel Noori Nastaleeq","Urdu Typesetting",serif;
+    --hindi:"Noto Sans Devanagari","Nirmala UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,"Segoe UI",Roboto,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  button{font:inherit;cursor:pointer;border:0;border-radius:999px;font-weight:600;color:inherit;background:none}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .btn{background:var(--text);color:#0b0b0c;padding:9px 18px;font-size:13.5px;display:inline-flex;align-items:center;gap:8px;justify-content:center;white-space:nowrap}
+  .btn:hover:not(:disabled){background:#fff}
+  .btn.brand{background:var(--orange);color:#0b0b0c}
+  .btn.brand:hover:not(:disabled){filter:brightness(1.08);background:var(--orange)}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line2)}
+  .btn.ghost:hover:not(:disabled){background:var(--hover)}
+  .btn.sm{padding:6px 12px;font-size:12.5px}
+  .btn.xs{padding:3px 9px;font-size:12px}
+  .btn.danger{background:transparent;color:var(--err);border:1px solid #4a2222}
+  .icon-btn{width:32px;height:32px;display:inline-grid;place-items:center;border-radius:8px;color:var(--muted)}
+  .icon-btn:hover{background:var(--hover);color:var(--text)}
+  input[type=text],input[type=password],input[type=number],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 11px;font:inherit;font-size:13.5px}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--line2);box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:28px}
+  select option,select optgroup{background:#151518;color:var(--text)}
+  /* selected voices clearly highlighted */
+  select.voice-pick:has(option:checked:not([value=""])){border-color:#2f6fb8;background-color:#0f2238;color:#d9ecff;font-weight:600}
+  textarea{resize:vertical}
+  label,.lbl{display:block;font-size:12px;color:var(--muted);margin:0 0 5px;font-weight:500}
+  .hint{color:var(--muted);font-size:12px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .grow{flex:1;min-width:0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .status{font-size:12.5px;min-height:18px}
+  .status.ok{color:var(--ok)} .status.err{color:var(--err)} .status.info{color:var(--info)}
+  a.dl{color:var(--text);font-weight:600;text-decoration:none;font-size:12.5px;border:1px solid var(--line2);border-radius:999px;padding:5px 11px;display:inline-flex;gap:6px;align-items:center}
+  a.dl:hover{background:var(--hover)}
+  code{background:var(--field);border:1px solid var(--line);padding:1px 6px;border-radius:6px;font-size:11.5px;word-break:break-all}
+  .urdu{font-family:var(--urdu);direction:rtl;text-align:right;line-height:2.1}
+  .hindi{font-family:var(--hindi)}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:34px 12px;border:1px dashed var(--line2);border-radius:var(--radius)}
+
+  /* ---------------- shell ---------------- */
+  .app{display:grid;grid-template-columns:232px minmax(0,1fr);height:100vh}
+  .nav{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 12px;gap:4px;overflow-y:auto}
+  .brandbox{display:flex;align-items:center;gap:10px;padding:2px 8px 16px}
+  .logo{width:30px;height:30px;border-radius:9px;background:var(--orange);color:#0b0b0c;font-weight:800;display:grid;place-items:center;font-size:13px}
+  .brandbox b{font-size:14.5px;display:block;line-height:1.15} .brandbox small{color:var(--muted);font-size:11.5px}
+  .nav-sec{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;padding:14px 10px 6px;font-weight:600}
+  .nav-btn{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:9px;color:var(--muted);font-weight:500;font-size:13.5px;text-align:left;width:100%}
+  .nav-btn svg{width:17px;height:17px;flex:none}
+  .nav-btn:hover{background:var(--hover);color:var(--text)}
+  .nav-btn.on{background:var(--hover);color:var(--text)}
+  .nav-btn.on svg{color:var(--orange)}
+  .nav-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex:none}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--err)}
+
+  .main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+  .mobilebar{display:none}
+  .page{flex:1;min-height:0;display:flex}
+  .page[hidden]{display:none}
+  .work{flex:1;min-width:0;display:flex;flex-direction:column;padding:22px 28px 16px;gap:14px;overflow-y:auto}
+  .work.fill{overflow:hidden}
+  .ph{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .ph h1{font-size:21px;margin:0;font-weight:650;letter-spacing:-.01em}
+  .ph p{margin:3px 0 0;color:var(--muted);font-size:13px}
+  .settings{width:340px;flex:none;border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:18px 18px 24px;display:flex;flex-direction:column;gap:18px}
+  .sec{display:flex;flex-direction:column;gap:9px}
+  .sec + .sec{border-top:1px solid var(--line);padding-top:16px}
+  .sec h3{margin:0;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .sec h3 .hint{font-weight:400}
+
+  /* segmented control */
+  .seg{display:inline-flex;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+  .seg button{border-radius:7px;padding:5px 10px;font-size:12.5px;color:var(--muted);font-weight:500}
+  .seg button.on{background:var(--hover);color:var(--text);box-shadow:inset 0 0 0 1px var(--line2)}
+  .seg.full{display:grid;grid-template-columns:repeat(4,1fr)}
+  .seg .ur{font-family:var(--urdu);font-size:13px;line-height:1}
+  .seg .hi{font-family:var(--hindi)}
+
+  details.adv.sec{display:block}
+  details.adv summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);list-style:none}
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv[open] summary{color:var(--text);margin-bottom:12px}
+  .advbody{display:flex;flex-direction:column;gap:14px}
+  /* slider */
+  .slider{display:flex;flex-direction:column;gap:4px}
+  .slider .top{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+  .slider .top b{color:var(--text);font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--orange);height:18px;margin:0}
+  .slider .ends{display:flex;justify-content:space-between;font-size:11px;color:var(--dim)}
+  .switch{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
+  .switch input{display:none}
+  .switch i{width:36px;height:20px;border-radius:20px;background:var(--line2);position:relative;transition:.15s;flex:none;cursor:pointer}
+  .switch i::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.15s}
+  .switch input:checked + i{background:var(--orange)}
+  .switch input:checked + i::after{left:18px}
+  .disabled-block{opacity:.4;pointer-events:none}
+
+  /* ---------------- editor ---------------- */
+  .editor-card{flex:1;min-height:260px;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
+  .editor-wrap{flex:1;min-height:0;overflow-y:auto}
+  .editor{position:relative}
+  .editor .hl,.editor textarea{font:15.5px/1.75 Inter,system-ui,"Segoe UI",Roboto,sans-serif;padding:18px 22px;margin:0;border:0;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;letter-spacing:normal;tab-size:4}
+  .editor .hl{position:absolute;inset:0;color:transparent;pointer-events:none}
+  .editor textarea{display:block;width:100%;background:transparent;resize:none;overflow:hidden;border-radius:0;outline:none!important;box-shadow:none!important;caret-color:var(--text);position:relative;min-height:240px}
+  .hl mark{color:transparent;border-radius:4px}
+  .m-tag{background:rgba(253,148,0,.26);box-shadow:0 0 0 1px rgba(253,148,0,.6)}
+  .m-style{background:rgba(62,207,142,.2);box-shadow:0 0 0 1px rgba(62,207,142,.6)}
+  .m-bad{background:rgba(255,107,107,.26);box-shadow:0 0 0 1px rgba(255,107,107,.8)}
+  .m-spk{background:rgba(122,180,255,.2);box-shadow:0 0 0 1px rgba(122,180,255,.6)}
+  .editor-foot{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .editor-foot .meta{color:var(--muted);font-size:12px}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  .tagbar{display:flex;flex-direction:column;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .tagbar[hidden]{display:none}
+  .cats{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  .cats::-webkit-scrollbar{display:none}
+  .cat{color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;white-space:nowrap;font-weight:500}
+  .cat.on{color:var(--text);border-color:var(--line2);background:var(--hover)}
+  .chips{display:flex;gap:5px;flex-wrap:wrap;max-height:64px;overflow-y:auto}
+  .chip{background:var(--orange-soft);color:var(--orange);border:1px solid rgba(253,148,0,.3);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:500}
+  .chip.st{background:rgba(62,207,142,.1);color:var(--ok);border-color:rgba(62,207,142,.3)}
+  .chip:hover{filter:brightness(1.3)}
+
+  /* progress */
+  .progress{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel);display:flex;flex-direction:column;gap:8px}
+  .progress[hidden]{display:none}
+  .bar{height:6px;border-radius:6px;background:var(--line);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),#ffc266);transition:width .4s}
+
+  /* paragraphs */
+  details.paras{border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  details.paras summary{cursor:pointer;padding:10px 14px;font-size:13px;color:var(--muted);list-style:none;display:flex;justify-content:space-between}
+  details.paras summary::-webkit-details-marker{display:none}
+  details.paras[open] summary{border-bottom:1px solid var(--line)}
+  .seglist{display:flex;flex-direction:column;gap:6px;padding:10px;max-height:280px;overflow-y:auto}
+  .pcard{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--card);display:flex;gap:10px;align-items:center}
+  .pcard.ready{border-left:3px solid var(--ok)} .pcard.error{border-left:3px solid var(--err)} .pcard.working{border-color:var(--info)}
+  .pcard .num{color:var(--dim);font-weight:600;font-size:12px;width:18px}
+  .pcard .t{flex:1;min-width:0;font-size:12.5px;color:#cfcfd4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pcard .st{font-size:11.5px;color:var(--muted);white-space:nowrap}
+
+  /* podcast */
+  .spk-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .spk{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--panel);display:flex;flex-direction:column;gap:8px}
+  .spk .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#0b0b0c}
+
+  /* subtitles */
+  .drop{border:1.5px dashed var(--line2);border-radius:16px;padding:28px 14px;text-align:center;color:var(--muted);cursor:pointer;margin:0;background:var(--panel)}
+  .drop:hover,.drop.over{border-color:var(--orange);color:var(--text)}
+  .cuelist{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow-y:auto;min-height:200px;flex:1}
+  .cue{display:grid;grid-template-columns:92px 1fr;gap:12px;padding:9px 14px;border-bottom:1px solid var(--line);cursor:pointer;align-items:center}
+  .cue:hover{background:var(--hover)}
+  .cue.on{background:var(--orange-soft)}
+  .cue time{font:12px ui-monospace,Consolas,monospace;color:var(--muted)}
+  .cue .tx{font-size:14px}
+  .cue .tx.urdu{font-size:16px;line-height:2}
+
+  /* history */
+  .hist{display:flex;flex-direction:column;gap:8px}
+  .hitem{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel)}
+  .hitem .ic{width:34px;height:34px;border-radius:9px;background:var(--hover);display:grid;place-items:center;flex:none;font-size:15px}
+  .hitem .info{flex:1;min-width:0}
+  .hitem .info b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hitem .info span{font-size:12px;color:var(--muted)}
+
+  /* lab / agent */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;align-items:start}
+  .card{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:16px;display:flex;flex-direction:column;gap:10px}
+  .card h2{margin:0;font-size:15px;font-weight:600}
+  .box{border:1px dashed var(--line2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+  .consent{background:var(--orange-soft);border-left:3px solid var(--orange);padding:8px 10px;border-radius:8px;font-style:italic;font-size:13px}
+  button.rec{background:rgba(253,148,0,.1);color:var(--orange);border:1px solid rgba(253,148,0,.5);padding:5px 12px;font-size:12.5px}
+  button.rec.on{background:var(--err);color:#fff;border-color:var(--err)}
+  .vrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .chat{flex:1;min-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
+  .bubble{max-width:85%;padding:8px 12px;border-radius:14px;font-size:13.5px}
+  .bubble.user{align-self:flex-end;background:var(--orange-soft);border:1px solid rgba(253,148,0,.3)}
+  .bubble.agent{align-self:flex-start;background:var(--card);border:1px solid var(--line)}
+  .bubble span.urdu{display:block;font-size:15px;line-height:2}
+  .chatbar{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:10px}
+  .attach-preview{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+  .attach-preview[hidden]{display:none}
+  .attach-preview img{height:44px;border-radius:6px}
+  .bubble img{max-width:220px;max-height:180px;border-radius:8px;display:block;margin-top:4px}
+  .bubble.note{align-self:center;background:transparent;border:1px dashed var(--line2);color:var(--muted);font-size:12px;padding:4px 10px}
+  .bubble small{display:block;font-size:10.5px;color:var(--muted);margin-bottom:2px}
+  .bigmic{width:84px;height:84px;border-radius:50%;background:var(--orange);color:#0b0b0c;font-size:30px;display:grid;place-items:center;margin:6px auto}
+  .bigmic.live{background:var(--err);color:#fff;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,107,107,.55)}70%{box-shadow:0 0 0 18px rgba(255,107,107,0)}100%{box-shadow:0 0 0 0 rgba(255,107,107,0)}}
+  .meter{height:5px;background:var(--line);border-radius:4px;overflow:hidden}
+  .meter i{display:block;height:100%;width:0;background:var(--ok);transition:width .08s}
+  audio{width:100%;height:36px}
+
+  /* agent page: fixed height, only the chat scrolls */
+  #v-agent .work{overflow:hidden}
+  #v-agent .cards{flex:1;min-height:0;align-items:stretch;grid-template-rows:minmax(0,1fr)}
+  #v-agent .card{min-height:0;overflow-y:auto}
+  #v-agent .chatcard{overflow:hidden;height:calc(100vh - 140px);max-height:calc(100vh - 140px);display:flex;flex-direction:column}
+  body.has-player #v-agent .chatcard{height:calc(100vh - 230px);max-height:calc(100vh - 230px)}
+  #v-agent .chat{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+  /* ---------------- player bar ---------------- */
+  .player{border-top:1px solid var(--line);background:var(--panel);padding:10px 18px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center}
+  .player[hidden]{display:none}
+  .pbtn{width:40px;height:40px;border-radius:50%;background:var(--text);color:#0b0b0c;display:grid;place-items:center;flex:none}
+  .pbtn svg{width:16px;height:16px}
+  .pmid{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .ptitle{display:flex;gap:10px;align-items:baseline;font-size:12.5px;min-width:0}
+  .ptitle b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+  .ptitle span{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .wave{position:relative;height:38px;cursor:pointer}
+  .wave canvas{width:100%;height:100%;display:block}
+  .pcap{font-size:13.5px;min-height:22px;color:#d8d8dd;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pcap.urdu{font-size:15px;line-height:1.6;text-align:center}
+  .pright{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+  .pmenu{position:absolute;right:18px;bottom:96px;width:320px;background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 50px rgba(0,0,0,.5);z-index:20}
+  .pmenu[hidden]{display:none}
+
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:60;padding:16px}
+  .modal[hidden]{display:none}
+  .modal .dlg{width:min(480px,100%);background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow-y:auto}
+  .krow{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+
+  /* ---------------- responsive ---------------- */
+  @media (max-width:1180px){ .settings{width:300px} }
+  @media (max-width:980px){
+    body{overflow:auto}
+    .app{display:block;height:auto}
+    .nav{position:fixed;inset:0 auto 0 0;width:250px;z-index:50;transform:translateX(-102%);transition:transform .2s}
+    body.nav-open .nav{transform:none}
+    body.nav-open #scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40}
+    .mobilebar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:30}
+    .page{flex-direction:column}
+    .work,.work.fill{overflow:visible;padding:16px}
+    .settings{width:auto;border-left:0;border-top:1px solid var(--line)}
+    .editor-card{min-height:340px}
+    .player{position:sticky;bottom:0;grid-template-columns:auto minmax(0,1fr);z-index:25}
+    .pright{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:center}
+    .spk-grid{grid-template-columns:1fr}
+    #v-agent .work{overflow:visible} #v-agent .chatcard,body.has-player #v-agent .chatcard{height:75vh;max-height:75vh}
+    .work,.work.fill{padding-bottom:40px}
+    .tagbar .row > input{min-width:100%!important;max-width:none!important}
+    .pmenu{position:fixed;left:16px;right:16px;width:auto;bottom:150px}
+  }
+  #scrim{display:none}
+</style>
+</head>
+<body>
+<div id="scrim"></div>
+<div class="app">
+
+  <!-- ================= NAV ================= -->
+  <aside class="nav" id="nav">
+    <div class="brandbox"><div class="logo">AK</div><div><b>AK Voice Studio</b><small>Gemini TTS</small></div></div>
+    <div class="nav-sec">Create</div>
+    <button class="nav-btn on" data-view="studio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>Text to Speech</button>
+    <button class="nav-btn" data-view="dialogue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Podcast</button>
+    <button class="nav-btn" data-view="subs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 13h4M14 13h4M6 16h8"/></svg>Subtitles</button>
+    <button class="nav-btn" data-view="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>History</button>
+    <div class="nav-sec">Voices</div>
+    <button class="nav-btn" data-view="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>Voice Lab</button>
+    <button class="nav-btn" data-view="agent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M9 13v2M15 13v2"/></svg>Voice Agent</button>
+    <div class="nav-foot">
+      <button class="nav-btn" id="keysBtn" type="button"><span class="dot" id="keyDot"></span>API keys <span class="hint" id="keyCount" style="margin-left:auto"></span></button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="mobilebar"><button class="icon-btn" id="menuBtn" type="button" aria-label="Menu">☰</button><b id="mobileTitle">Text to Speech</b></div>
+
+    <!-- ================= TEXT TO SPEECH ================= -->
+    <section class="page" id="v-studio">
+      <div class="work fill">
+        <div class="ph">
+          <div><h1>Text to Speech</h1><p>Script likho, voice chuno, Generate dabao.</p></div>
+          <button class="btn ghost sm" id="togglePanel" type="button">🎭 Emotions &amp; effects</button>
+        </div>
+        <div class="editor-card">
+          <div class="tagbar" id="tagPanel" hidden>
+            <div class="row">
+              <div class="seg" id="modeCtl"><button type="button" class="on" data-mode="style">🎭 Emotions</button><button type="button" data-mode="tag">🔊 Effects</button></div>
+              <input type="text" id="chipSearch" class="grow" placeholder="Dhoondo…" style="max-width:200px;padding:6px 10px">
+              <input type="text" id="customStyle" class="grow" placeholder="Apna emotion likho" style="padding:6px 10px">
+              <button type="button" class="btn ghost xs" id="customStyleBtn">Lagao</button>
+            </div>
+            <div class="cats" id="cats"></div>
+            <div class="chips" id="chips"></div>
+            <span class="hint">Emotion: cursor paragraph mein rakh kar click karo. Effect: jahan cursor ho wahan lag jata hai.</span>
+          </div>
+          <div class="editor-wrap" id="editorWrap">
+            <div class="editor">
+              <div class="hl" id="hl" aria-hidden="true"></div>
+              <textarea id="script" spellcheck="false" placeholder="Yahan apni script likho…
+
+Tip: paragraph ke shuru mein [excited] jaisa emotion, aur beech mein <laugh> jaisa effect laga sakte ho."></textarea>
+            </div>
+          </div>
+          <div class="editor-foot">
+            <span class="meta grow" id="tagCount"></span>
+            <span class="meta" id="charCount"></span>
+            <button class="btn brand" id="genAllBtn" type="button">Generate speech</button>
+          </div>
+        </div>
+        <div class="progress" id="studioProgress" hidden>
+          <div class="row"><div class="grow"><span class="status info" id="studioStatus"></span></div><button class="btn ghost xs" id="stopBtn" type="button">Roko</button></div>
+          <div class="bar"><i id="studioBar"></i></div>
+        </div>
+        <div class="status" id="studioMsg"></div>
+        <details class="paras" id="parasBox">
+          <summary><span>Har paragraph alag banao (advanced)</span><span id="parasCount"></span></summary>
+          <div class="seglist" id="segList"></div>
+          <div class="row" style="padding:0 10px 10px"><button class="btn ghost sm" id="exportBtn" type="button">Takes jor kar export karein</button><span class="hint" id="exportHint"></span></div>
+          <audio id="segPlayer" hidden></audio>
+        </details>
+      </div>
+
+      <!-- shared settings panel (also shown on Podcast) -->
+      <aside class="settings" id="settingsPanel">
+        <div class="sec" id="voiceSec">
+          <h3>Voice</h3>
+          <div class="row" style="flex-wrap:nowrap"><select id="voiceSelect" class="voice-pick grow"></select><button class="btn ghost sm" id="previewBtn" type="button" title="Voice suno">▶</button></div>
+          <audio id="previewAudio" controls hidden></audio>
+        </div>
+
+        <div class="sec">
+          <h3>Language / accent</h3>
+          <select id="speechLanguage">
+            <option value="ur-PK">Urdu — Pakistani</option>
+            <option value="en-US">English — US</option>
+            <option value="hi-IN">Hindi — Indian</option>
+            <option value="">Auto</option>
+          </select>
+          <span class="hint" id="speechLanguageStatus"></span>
+        </div>
+
+        <div class="sec">
+          <h3>Model <button class="icon-btn" id="refreshModels" type="button" title="Saare models load karo" style="width:26px;height:26px">↻</button></h3>
+          <select id="model"></select>
+          <span class="hint" id="modelStatus" hidden></span>
+        </div>
+
+        <div class="sec">
+          <h3>Subtitles ki likhai</h3>
+          <div class="seg full" id="scriptCtl">
+            <button type="button" data-script="original">Asli</button>
+            <button type="button" data-script="roman">Roman</button>
+            <button type="button" data-script="hindi"><span class="hi">हिंदी</span></button>
+            <button type="button" data-script="urdu"><span class="ur">اردو</span></button>
+          </div>
+          <span class="hint" id="scriptHint" hidden></span>
+        </div>
+
+        <div class="sec">
+          <label class="switch"><b style="font-size:13px">Khali jagah hatao</b><input type="checkbox" id="silOn"><i></i></label>
+          <div class="slider" id="silMain">
+            <div class="top"><span>Sab se lamba pause</span><b id="maxPauseVal"></b></div>
+            <input type="range" id="maxPause" min="100" max="2000" step="50">
+            <div class="ends"><span>Tight</span><span>Natural</span></div>
+          </div>
+        </div>
+
+        <details class="sec adv">
+          <summary>⚙ Advanced settings</summary>
+          <div class="advbody">
+            <div id="styleSec"><label>Default style (jis paragraph mein [emotion] na ho)</label><input type="text" id="style" placeholder="jaise: friendly YouTube tutorial tone"></div>
+            <div id="voiceAdv">
+              <label>Voice ID khud likho (optional)</label><input type="text" id="voiceManual" placeholder="voice ID">
+              <label style="margin-top:8px">Voice library (2000+)</label>
+              <div class="two"><select id="libLang"><option value="ur-PK,ur-IN">Urdu</option><option value="hi-IN">Hindi</option><option value="en-IN">English (India)</option><option value="en-US,en-GB">English (US/UK)</option><option value="">Sab</option></select><select id="libGender"><option value="">Male + Female</option><option value="male">Male</option><option value="female">Female</option></select></div>
+              <button class="btn ghost sm" id="libBtn" type="button" style="margin-top:6px">Dhoondo</button>
+              <div id="libStatus" class="hint"></div>
+            </div>
+            <div class="slider">
+              <div class="top"><span>Voice consistency (request size)</span><b id="chunkVal"></b></div>
+              <input type="range" id="chunkChars" min="0" max="3000" step="100">
+              <div class="ends"><span>Ek request</span><span>Chhota = accent stable</span></div>
+            </div>
+            <div id="silBlock" style="display:flex;flex-direction:column;gap:12px">
+              <div class="slider"><div class="top"><span>Shuru / aakhir ki khamoshi</span><b id="edgeVal"></b></div><input type="range" id="edgeMs" min="0" max="1000" step="20"></div>
+              <div class="slider"><div class="top"><span>Khamoshi ki pehchan</span><b id="thrVal"></b></div><input type="range" id="thrDb" min="-60" max="-25" step="1"><div class="ends"><span>Sirf bilkul khamoshi</span><span>Saans bhi</span></div></div>
+            </div>
+            <div class="two">
+              <div><label>File ka naam</label><input type="text" id="fname" value="voiceover"></div>
+              <div><label>Takes ke beech pause (ms)</label><input type="number" id="pause" value="300" min="0" step="50"></div>
+            </div>
+            <span id="chunkInfo" hidden></span>
+          </div>
+        </details>
+      </aside>
+    </section>
+
+    <!-- ================= PODCAST ================= -->
+    <section class="page" id="v-dialogue" hidden>
+      <div class="work fill">
+        <div class="ph">
+          <div><h1>Podcast</h1><p>Koi bhi script paste karo. <code>Naam: baat</code> likho to speaker badlega; naam na ho to pichhla speaker bolta rahega. [MUSIC], [SFX] jaisi lines khud hat jati hain.</p></div>
+          <button class="btn ghost sm" id="dlgExample" type="button">Example daalo</button>
+        </div>
+        <div class="spk-grid">
+          <div class="spk">
+            <div class="row"><span class="av" style="background:#7ab4ff">1</span><b class="grow">Speaker 1</b></div>
+            <div class="two"><div><label>Naam</label><input type="text" id="spk1" value="Ali"></div><div><label>Voice</label><select id="spk1v" class="voice-pick"></select></div></div>
+          </div>
+          <div class="spk">
+            <div class="row"><span class="av" style="background:#f6a3d0">2</span><b class="grow">Speaker 2</b></div>
+            <div class="two"><div><label>Naam</label><input type="text" id="spk2" value="Sara"></div><div><label>Voice</label><select id="spk2v" class="voice-pick"></select></div></div>
+          </div>
+        </div>
+        <div class="editor-card">
+          <div class="editor-wrap">
+            <div class="editor">
+              <div class="hl" id="dlgHl" aria-hidden="true"></div>
+              <textarea id="dlgScript" spellcheck="false" placeholder="Ali [excited]: Assalam o alaikum Sara! Aaj hum n8n ke baare mein baat karenge.
+Sara: Walaikum assalam! <chuckle> Zaroor, shuru karte hain."></textarea>
+            </div>
+          </div>
+          <div class="editor-foot">
+            <span class="meta grow" id="dlgCount"></span>
+            <button class="btn brand" id="dlgBtn" type="button">Generate podcast</button>
+          </div>
+        </div>
+        <div class="progress" id="dlgProgress" hidden>
+          <div class="row"><div class="grow"><span class="status info" id="dlgStatus"></span></div><button class="btn ghost xs" id="dlgStop" type="button">Roko</button></div>
+          <div class="bar"><i id="dlgBar"></i></div>
+        </div>
+        <div class="status" id="dlgMsg"></div>
+      </div>
+    </section>
+
+    <!-- ================= SUBTITLES ================= -->
+    <section class="page" id="v-subs" hidden>
+      <div class="work">
+        <div class="ph"><div><h1>Subtitles</h1><p>Audio/video se SRT banayein, ya purani SRT ki script badlein (Roman / Hindi / Urdu).</p></div></div>
+        <div class="two" style="align-items:start">
+          <div class="card">
+            <h2>Audio / video se</h2>
+            <label class="drop" id="drop">
+              <input type="file" id="subFile" accept="audio/*,video/*" hidden>
+              <div style="font-size:24px">⬆</div>
+              <div id="dropText">File yahan chhorein ya click karein</div>
+            </label>
+            <div class="two">
+              <div><label>Boli jaane wali zabaan</label>
+                <select id="subLang"><option value="">Auto detect</option><option value="hi-IN">Urdu / Hindi bol-chaal</option><option value="en-US">English (US)</option><option value="en-IN">English (India)</option><option value="pa-IN">Punjabi</option></select></div>
+              <div><label>Speakers</label><select id="subDiar"><option value="false">Ek speaker</option><option value="true">Kai speakers</option></select></div>
+            </div>
+            <button class="btn brand" id="subBtn" type="button">Subtitles banao</button>
+            <div class="status" id="subStatus"></div>
+          </div>
+          <div class="card">
+            <h2>Maujooda SRT convert karein</h2>
+            <span class="hint">Hindi (Devanagari) mein aayi SRT ko Urdu ya Roman mein badlein — timing wahi rahegi.</span>
+            <label class="drop" id="srtDrop" style="padding:18px 14px">
+              <input type="file" id="srtFile" accept=".srt" hidden>
+              <div id="srtDropText">.srt file chunein</div>
+            </label>
+            <button class="btn ghost" id="srtBtn" type="button">Convert karo</button>
+            <div class="status" id="srtStatus"></div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl" style="margin:0">Script:</span>
+          <div class="seg" id="subScriptCtl">
+            <button type="button" data-script="original">Original</button>
+            <button type="button" data-script="roman">Roman</button>
+            <button type="button" data-script="hindi"><span class="hi">हिंदी</span></button>
+            <button type="button" data-script="urdu"><span class="ur">اردو</span></button>
+          </div>
+          <span class="grow"></span>
+          <div class="row" id="subLinks"></div>
+        </div>
+        <div class="cuelist" id="cueList"><div class="empty">Subtitles yahan dikhengi.</div></div>
+      </div>
+    </section>
+
+    <!-- ================= HISTORY ================= -->
+    <section class="page" id="v-history" hidden>
+      <div class="work">
+        <div class="ph"><div><h1>History</h1><p>Har generation yahan save hai — sunein, pauses/script badlein, ya download karein.</p></div><button class="btn ghost sm" id="histRefresh" type="button">↻ Refresh</button></div>
+        <div class="hist" id="histList"><div class="empty">Load ho raha hai…</div></div>
+      </div>
+    </section>
+
+    <!-- ================= VOICE LAB ================= -->
+    <section class="page" id="v-lab" hidden>
+      <div class="work">
+        <div class="ph"><div><h1>Voice Lab</h1><p>Nayi awaz design karein, apni awaz clone karein, aur apni voices manage karein.</p></div></div>
+        <div class="cards">
+          <div class="card">
+            <h2>✨ Voice Design</h2>
+            <span class="hint">Mustaqil cheezein likhein: umar, awaz ki qisam, lehja. Emotion baad mein [ ] se dein.</span>
+            <label style="margin:0">Awaz ki tafseel</label>
+            <textarea id="dsDesc" rows="4" placeholder="A confident Pakistani man in his late 20s with a warm, clear voice and a light South Asian accent, friendly tech YouTuber."></textarea>
+            <div class="two">
+              <div><label>Naam</label><input type="text" id="dsName" value="AK Narrator"></div>
+              <div><label>Gender</label><select id="dsGender"><option value="male">Male</option><option value="female">Female</option><option value="">Neutral</option></select></div>
+            </div>
+            <div><label>Language code</label><select id="dsLang"><option value="en-IN">en-IN (English, India)</option><option value="hi-IN">hi-IN (Hindi)</option><option value="en-US">en-US</option><option value="en-GB">en-GB</option></select></div>
+            <button class="btn brand" id="dsBtn" type="button">Voice banao</button>
+            <div class="status" id="dsStatus"></div>
+            <audio id="dsAudio" controls hidden></audio>
+          </div>
+          <div class="card">
+            <h2>🧬 Voice Cloning <span class="hint">(paid Google account)</span></h2>
+            <input type="text" id="voiceName" value="Arsalan Voice" placeholder="Voice ka naam">
+            <div class="box">
+              <b style="font-size:13px">A. Reference audio (10–30 sec)</b>
+              <div class="row"><button class="rec" data-target="source" type="button">● Record</button><input type="file" accept="audio/*" data-file="source" class="grow"></div>
+              <audio id="sourcePrev" controls hidden></audio>
+              <div class="hint" id="sourceInfo"></div>
+            </div>
+            <div class="box">
+              <b style="font-size:13px">B. Consent (English mein bolein)</b>
+              <div class="consent">"I am the owner of this voice and I consent to Google using this voice to create a synthetic voice model."</div>
+              <div class="row"><button class="rec" data-target="consent" type="button">● Record</button><input type="file" accept="audio/*" data-file="consent" class="grow"></div>
+              <audio id="consentPrev" controls hidden></audio>
+              <div class="hint" id="consentInfo"></div>
+            </div>
+            <button class="btn brand" id="cloneBtn" type="button">Voice clone karo</button>
+            <div class="status" id="cloneStatus"></div>
+          </div>
+          <div class="card">
+            <div class="row"><h2 class="grow">Meri voices</h2><button class="btn ghost xs" id="refreshBtn" type="button">Refresh</button></div>
+            <span class="hint">Design ya clone ki hui voices (Google project mein 1 saal tak save).</span>
+            <div id="voiceList" class="hint">Load ho raha hai…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VOICE AGENT ================= -->
+    <section class="page" id="v-agent" hidden>
+      <div class="work">
+        <div class="ph"><div><h1>Voice Agent</h1><p>Mic dabao aur baat shuru karo — AI awaz mein jawab dega.</p></div></div>
+        <div class="cards">
+          <div class="card">
+            <label style="margin:0">Mood</label>
+            <div class="seg full" id="moodCtl" style="grid-template-columns:repeat(4,1fr)">
+              <button type="button" data-mood="masti">😂 Masti</button>
+              <button type="button" data-mood="dost">🤗 Dost</button>
+              <button type="button" data-mood="pro">💼 Business</button>
+              <button type="button" data-mood="custom">✏️ Apna</button>
+            </div>
+            <span class="hint" id="moodHint"></span>
+            <div class="two">
+              <div><label>Agent ki voice</label><select id="agentVoice" class="voice-pick"></select></div>
+              <div><label>Kis zabaan mein bole</label><select id="agentLang"><option value="Urdu (Pakistani, Roman Urdu style)">Urdu</option><option value="English">English</option><option value="Hindi">Hindi</option></select></div>
+            </div>
+            <label class="switch"><span><b style="font-size:13px">🎭 Jazbaat full on</b><br><span class="hint">Khul kar hansna, lotpot hona, udaas hona, josh, nakli rona</span></span><input type="checkbox" id="emoOn" checked><i></i></label>
+            <button class="bigmic" id="agentBtn" type="button" title="Start / Stop">🎙</button>
+            <div class="meter"><i id="micLevel"></i></div>
+            <div class="status" id="agentStatus" style="text-align:center">Mic dabao aur bolo. Headphones behtar hain.</div>
+            <details id="promptBox">
+              <summary class="hint" style="cursor:pointer">Agent ki instructions dekho / badlo</summary>
+              <textarea id="agentPrompt" rows="9" style="margin-top:8px"></textarea>
+            </details>
+          </div>
+          <div class="card chatcard">
+            <div class="row"><h2 class="grow">Baat-cheet</h2><button class="btn ghost xs" id="chatClear" type="button">Saaf karo</button></div>
+            <div class="row"><span class="hint">Likhai:</span>
+              <div class="seg" id="chatScriptCtl">
+                <button type="button" data-script="original">Asli</button>
+                <button type="button" data-script="english">English</button>
+                <button type="button" data-script="roman">Roman</button>
+                <button type="button" data-script="hindi"><span class="hi">हिंदी</span></button>
+                <button type="button" data-script="urdu"><span class="ur">اردو</span></button>
+              </div>
+            </div>
+            <div class="chat" id="chat"><div class="empty">Abhi koi baat nahi hui.</div></div>
+            <div class="attach-preview" id="attachPreview" hidden></div>
+            <div class="chatbar">
+              <button class="icon-btn" id="attachBtn" type="button" title="Tasveer, PDF ya text file bhejo">📎</button>
+              <input type="file" id="attachFile" accept="image/*,.pdf,.txt,.md,.csv,.json,.srt" hidden>
+              <input type="text" id="chatInput" class="grow" placeholder="Message ya link likho… (call chalu honi chahiye)">
+              <button class="btn brand sm" id="chatSend" type="button">Bhejo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PLAYER ================= -->
+    <div class="player" id="player" hidden>
+      <button class="pbtn" id="pPlay" type="button" aria-label="Play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg></button>
+      <div class="pmid">
+        <div class="ptitle"><b id="pTitle"></b><span id="pTime">0:00 / 0:00</span><span id="pInfo"></span></div>
+        <div class="wave" id="pWave"><canvas id="pCanvas"></canvas></div>
+        <div class="pcap" id="pCap"></div>
+      </div>
+      <div class="pright">
+        <div class="seg" id="pScriptCtl">
+          <button type="button" data-script="original">Original</button>
+          <button type="button" data-script="roman">Roman</button>
+          <button type="button" data-script="hindi"><span class="hi">हिंदी</span></button>
+          <button type="button" data-script="urdu"><span class="ur">اردو</span></button>
+        </div>
+        <div class="row"><span id="pLinks" class="row"></span><button class="icon-btn" id="pSettings" type="button" title="Pauses adjust karein">⚙</button></div>
+      </div>
+      <audio id="pAudio" preload="auto" hidden></audio>
+    </div>
+    <div class="pmenu" id="pMenu" hidden>
+      <b style="font-size:13px">Is audio ke pauses</b>
+      <label class="switch"><span>Khamoshi chhoti karo</span><input type="checkbox" id="pSilOn"><i></i></label>
+      <div class="slider"><div class="top"><span>Zyada se zyada pause</span><b id="pMaxVal"></b></div><input type="range" id="pMax" min="100" max="2000" step="50"></div>
+      <div class="slider"><div class="top"><span>Shuru / aakhir</span><b id="pEdgeVal"></b></div><input type="range" id="pEdge" min="0" max="1000" step="20"></div>
+      <div class="slider"><div class="top"><span>Threshold</span><b id="pThrVal"></b></div><input type="range" id="pThr" min="-60" max="-25" step="1"></div>
+      <div class="row"><button class="btn brand sm" id="pApply" type="button">Apply</button><span class="status grow" id="pMenuStatus"></span></div>
+      <span class="hint">Original audio safe rehti hai — jitni baar chahein badlein.</span>
+    </div>
+  </main>
+</div>
+
+<!-- ================= API KEYS MODAL ================= -->
+<div class="modal" id="keysModal" hidden>
+  <div class="dlg">
+    <div class="row"><h2 class="grow" style="margin:0;font-size:16px">Gemini API keys</h2><button class="icon-btn" id="keysClose" type="button">✕</button></div>
+    <span class="hint">Keys sirf is computer par save hoti hain. Key fail ho (quota / invalid) to agli key khud try hoti hai.</span>
+    <div id="keyList"></div>
+    <div class="two"><input id="keyLabel" placeholder="Naam (optional)" maxlength="60"><input id="keyInput" type="password" autocomplete="off" placeholder="API key paste karein"></div>
+    <button class="btn brand" id="saveKeyBtn" type="button">＋ Key add karein</button>
+    <div class="status" id="keyStatus"></div>
+    <div class="hint" id="keyEvents" style="white-space:pre-line"></div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+let CFG = { live_model: "gemini-3.8-live", known_models: ["gemini-3.8-flash-tts", "gemini-3.8-flash-lite-tts"] };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("akvs-" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("akvs-" + k, JSON.stringify(v)); } catch {} }
+};
+function status(el, msg, kind = "") { el.textContent = msg; el.className = "status " + kind; }
+async function api(url, opts) {
+  const r = await fetch(url, opts);
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.detail || r.statusText);
+  return d;
+}
+const fmt = s => { s = Math.max(0, s || 0); return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); };
+const scriptClass = s => s === "urdu" ? "urdu" : s === "hindi" ? "hindi" : "";
+const newTake = () => Math.random().toString(36).slice(2, 10);
+
+/* ================= navigation ================= */
+const TITLES = { studio: "Text to Speech", dialogue: "Podcast", subs: "Subtitles", history: "History", lab: "Voice Lab", agent: "Voice Agent" };
+function showView(v) {
+  if (!$("#v-" + v)) v = "studio";
+  $$(".nav-btn[data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+  $$(".page").forEach(x => x.hidden = x.id !== "v-" + v);
+  // one settings panel shared by Text to Speech and Podcast
+  const panel = $("#settingsPanel");
+  if (v === "dialogue") $("#v-dialogue").appendChild(panel); else $("#v-studio").appendChild(panel);
+  $("#voiceSec").hidden = v === "dialogue"; $("#styleSec").hidden = v === "dialogue"; $("#voiceAdv").hidden = v === "dialogue";
+  $("#mobileTitle").textContent = TITLES[v];
+  store.set("view", v); document.body.classList.remove("nav-open");
+  if (v === "history") loadHistory();
+  requestAnimationFrame(() => { renderHighlights(); renderDlgHighlights(); });
+}
+$$(".nav-btn[data-view]").forEach(b => b.onclick = () => showView(b.dataset.view));
+$("#menuBtn").onclick = () => document.body.classList.add("nav-open");
+$("#scrim").onclick = () => document.body.classList.remove("nav-open");
+
+/* ================= API keys ================= */
+let keyPollBusy = false, lastKeyRev = -1;
+function renderKeys(data) {
+  $("#keyDot").className = "dot " + (data.keys.length ? (data.keys.find(k => k.id === data.active)?.status?.match(/invalid|quota|expired/i) ? "err" : "ok") : "err");
+  $("#keyCount").textContent = data.keys.length ? data.keys.length : "add";
+  $("#keyList").innerHTML = data.keys.map(k => `<div class="krow">
+    <div class="grow"><b>${esc(k.label)}</b> <span class="hint">${esc(k.masked)}</span><br><span class="hint">${k.id === data.active ? "● Active · " : ""}${esc(k.status)}</span></div>
+    <button class="btn ghost xs" data-key-select="${esc(k.id)}" ${k.id === data.active ? "disabled" : ""}>Use</button>
+    <button class="btn danger xs" data-key-remove="${esc(k.id)}" aria-label="Remove ${esc(k.label)}">✕</button>
+  </div>`).join("") || '<div class="empty" style="padding:16px">Abhi koi key nahi. Neeche paste karein.</div>';
+  $("#keyEvents").textContent = data.events.slice(-3).map(e => e.message).join("\n");
+  if (data.revision !== lastKeyRev && lastKeyRev !== -1 && data.events.length) {
+    const msg = data.events[data.events.length - 1].message;
+    if (/Auto switch/.test(msg)) toast(msg);
+  }
+  lastKeyRev = data.revision;
+}
+async function pollKeys() {
+  if (keyPollBusy) return; keyPollBusy = true;
+  try { renderKeys(await api("/api/keys")); } catch {} finally { keyPollBusy = false; }
+}
+$("#keysBtn").onclick = () => { $("#keysModal").hidden = false; $("#keyInput").focus(); };
+$("#keysClose").onclick = () => $("#keysModal").hidden = true;
+$("#keysModal").onclick = e => { if (e.target.id === "keysModal") $("#keysModal").hidden = true; };
+$("#saveKeyBtn").onclick = async () => {
+  const btn = $("#saveKeyBtn"); if (btn.disabled) return; btn.disabled = true;
+  try {
+    const d = await api("/api/keys", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({key: $("#keyInput").value, label: $("#keyLabel").value})});
+    $("#keyInput").value = ""; $("#keyLabel").value = "";
+    renderKeys(d); status($("#keyStatus"), "Key save ho gayi. App tayyar hai.", "ok");
+    await refreshModels(); await loadVoices(store.get("voice"));
+  } catch (e) { status($("#keyStatus"), e.message, "err"); }
+  finally { btn.disabled = false; }
+};
+$("#keyList").onclick = async e => {
+  const btn = e.target.closest("button"); if (!btn || btn.disabled) return;
+  const id = btn.dataset.keySelect || btn.dataset.keyRemove; if (!id) return;
+  btn.disabled = true;
+  try {
+    const select = !!btn.dataset.keySelect;
+    renderKeys(await api("/api/keys/" + encodeURIComponent(id) + (select ? "/select" : ""), {method: select ? "POST" : "DELETE"}));
+    status($("#keyStatus"), select ? "Active key badal gayi." : "Key remove ho gayi.", "ok");
+    if (select) { await refreshModels(); await loadVoices(store.get("voice")); }
+  } catch (err) { status($("#keyStatus"), err.message, "err"); }
+  finally { await pollKeys(); }
+};
+setInterval(pollKeys, 2500);
+
+let toastTimer;
+function toast(msg) {
+  let t = $("#toast");
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;top:16px;right:16px;max-width:380px;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:10px 14px;font-size:13px;z-index:80;box-shadow:0 10px 30px rgba(0,0,0,.4)"; document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 10000);
+}
+
+/* ================= models (all Gemini TTS models) ================= */
+let modelLoadBusy = false;
+function renderModels(list, source) {
+  const select = $("#model"), current = select.value || store.get("#model", "gemini-3.8-flash-tts");
+  const latest = list.filter(m => !m.legacy), legacy = list.filter(m => m.legacy);
+  const opt = m => `<option value="${esc(m.id)}">${esc(m.name && m.name !== m.id ? m.name : m.id)}${m.preview ? " · preview" : ""}</option>`;
+  select.innerHTML = (latest.length ? `<optgroup label="Gemini TTS">${latest.map(opt).join("")}</optgroup>` : "") +
+                     (legacy.length ? `<optgroup label="Legacy (custom/cloned voice nahi)">${legacy.map(opt).join("")}</optgroup>` : "");
+  if (list.some(m => m.id === current)) select.value = current;
+  store.set("#model", select.value);
+  $("#modelStatus").textContent = source === "catalog" ? `${list.length} TTS models aapki key ke Google catalog se.` :
+    source === "cache" ? `${list.length} models (pichli dafa ki list). ↻ se taaza karein.` : "Default list. Key add karke ↻ Refresh dabayein.";
+}
+async function refreshModels() {
+  if (modelLoadBusy) return; modelLoadBusy = true; $("#refreshModels").disabled = true;
+  $("#modelStatus").textContent = "Google se saare TTS models load ho rahe hain…";
+  try {
+    const d = await api("/api/models");
+    store.set("models", d.models); renderModels(d.models, d.source);
+  } catch (e) { $("#modelStatus").textContent = "Models refresh nahi hue: " + e.message; }
+  finally { modelLoadBusy = false; $("#refreshModels").disabled = false; pollKeys(); }
+}
+$("#refreshModels").onclick = refreshModels;
+$("#model").onchange = () => store.set("#model", $("#model").value);
+
+/* ================= voices ================= */
+const PREBUILT = [["Charon","Informative"],["Sadaltager","Knowledgeable"],["Achird","Friendly"],["Iapetus","Clear"],["Orus","Firm"],["Puck","Upbeat"],["Algieba","Smooth"],["Fenrir","Excitable"],["Umbriel","Easy-going"],["Zubenelgenubi","Casual"],["Rasalgethi","Informative"],["Alnilam","Firm"],["Schedar","Even"],["Gacrux","Mature"],["Algenib","Gravelly"],["Enceladus","Breathy"],["Kore","Firm"],["Zephyr","Bright"],["Aoede","Breezy"],["Leda","Youthful"],["Callirrhoe","Easy-going"],["Autonoe","Bright"],["Despina","Smooth"],["Erinome","Clear"],["Laomedeia","Upbeat"],["Achernar","Soft"],["Pulcherrima","Forward"],["Vindemiatrix","Gentle"],["Sadachbia","Lively"],["Sulafat","Warm"]];
+let custom = [], library = [], regionalVoices = [], manualVoiceFallback = false;
+const speakingLanguage = () => $("#speechLanguage").value;
+const prebuiltOpts = () => PREBUILT.map(([n, d]) => `<option value="${n}">${n} — ${d}</option>`).join("");
+function renderVoiceSelects(select) {
+  const regional = !!speakingLanguage();
+  const voices = regional ? regionalVoices : library;
+  const opts = voices.map(v => `<option value="${esc(v.id)}">${esc(v.display_name || v.id)} · ${esc(v.language_code)} ${esc(v.gender || "")}</option>`).join("");
+  const standard = `<optgroup label="Google prebuilt">${prebuiltOpts()}</optgroup>`;
+  const mine = custom.length ? `<optgroup label="Meri voices">${custom.map(v => `<option value="${esc(v.id)}">${esc(v.display_name || v.id)}</option>`).join("")}</optgroup>` : "";
+  let html = opts ? `<optgroup label="${regional ? "Regional voices" : "Library"}">${opts}</optgroup>` : "";
+  if (!regional) html += mine + standard;
+  if (regional && manualVoiceFallback) html = '<option value="">Voice manually select karein</option>' + mine + standard;
+  if (!html) html = '<option value="">Matching voices load ho rahi hain…</option>';
+  const sel = $("#voiceSelect"), keep = select || sel.value || store.get("voice", manualVoiceFallback ? "" : "Charon");
+  sel.innerHTML = html;
+  if ([...sel.options].some(o => o.value === keep)) sel.value = keep;
+  // Podcast speakers: always remember the user's own choice (stored), never silently replace it
+  [["#spk1v", "Puck", "male"], ["#spk2v", "Kore", "female"]].forEach(([id, def, gender]) => {
+    const s = $(id), previous = store.get(id, "") || s.value;
+    s.innerHTML = regional ? html : standard + mine + (opts ? `<optgroup label="Library">${opts}</optgroup>` : "");
+    const fallback = regional && manualVoiceFallback ? "" : regional ? (voices.find(v => v.gender?.toLowerCase() === gender)?.id || voices[id === "#spk1v" ? 0 : 1]?.id || "") : def;
+    s.value = [...s.options].some(o => o.value === previous) ? previous : fallback;
+  });
+  const a = $("#agentVoice"), aKeep = a.value || store.get("#agentVoice", "Charon");
+  a.innerHTML = standard; a.value = aKeep;
+}
+const currentVoice = () => $("#voiceManual").value.trim() || $("#voiceSelect").value;
+async function loadVoices(select) {
+  const list = $("#voiceList");
+  try {
+    custom = (await api("/api/voices")).voices;
+    list.innerHTML = custom.length ? custom.map(v =>
+      `<div class="vrow"><div><b>${esc(v.display_name || "(no name)")}</b> <span class="hint">${esc(v.type)}</span><br><code>${esc(v.id)}</code></div>
+       <button class="btn danger xs" type="button" data-del="${esc(v.id)}">Delete</button></div>`).join("")
+      : `<div class="empty">Abhi koi voice nahi. Voice Design se banayein.</div>`;
+  } catch (e) { list.textContent = "Voices load nahi huin: " + e.message; }
+  await refreshLanguageVoices(select);
+  renderSegments();
+}
+let languageRevision = 0;
+async function refreshLanguageVoices(select) {
+  const language = speakingLanguage(), revision = ++languageRevision, hint = $("#speechLanguageStatus");
+  regionalVoices = []; manualVoiceFallback = false; renderVoiceSelects(select);
+  if (!language) { hint.textContent = "Auto: voice apne accent mein bolegi."; return; }
+  hint.textContent = "Is language ki voices load ho rahi hain…";
+  try {
+    const data = await api("/api/language-voices?language=" + encodeURIComponent(language));
+    if (revision !== languageRevision) return;
+    regionalVoices = data.voices; manualVoiceFallback = regionalVoices.length === 0;
+    hint.textContent = regionalVoices.length ? `${regionalVoices.length} matching voices. Har request mein yeh language jaati hai, is liye accent wahi rehta hai.` : "Matching voice nahi mili — dropdown se voice manually chunein. Language phir bhi har request mein jayegi.";
+  } catch (e) { if (revision === languageRevision) hint.textContent = e.message; }
+  if (revision === languageRevision) { renderVoiceSelects(select || $("#voiceSelect").value); renderSegments(); }
+}
+$("#speechLanguage").onchange = () => { store.set("speechLanguage", speakingLanguage()); refreshLanguageVoices(); renderSegments(); };
+$("#voiceList").onclick = async e => {
+  const id = e.target.dataset.del; if (!id) return;
+  if (!confirm("Ye voice hamesha ke liye delete ho jayegi. Pakka?")) return;
+  try { await api("/api/voices/" + encodeURIComponent(id), { method: "DELETE" }); loadVoices(); } catch (err) { alert(err.message); }
+};
+$("#refreshBtn").onclick = () => loadVoices();
+$("#libBtn").onclick = async () => {
+  const st = $("#libStatus"); st.textContent = "Dhoond raha hoon…";
+  const q = new URLSearchParams({ language: $("#libLang").value, gender: $("#libGender").value });
+  try {
+    library = (await api("/api/library?" + q)).voices;
+    st.textContent = library.length ? `${library.length} voices mili — dropdown mein "Library" dekhein (Auto language mein).` : "Is filter par koi voice nahi mili.";
+    renderVoiceSelects(library[0] && library[0].id); renderSegments();
+  } catch (e) { st.textContent = e.message; }
+};
+$("#previewBtn").onclick = async () => {
+  const btn = $("#previewBtn"); btn.disabled = true; btn.textContent = "…";
+  const fd = new FormData();
+  fd.append("text", "Assalam o alaikum dosto! Aaj hum seekhenge ke AI automation se business ka kaam kaise asaan hota hai.");
+  fd.append("voice", currentVoice()); fd.append("style", $("#style").value); fd.append("model", $("#model").value); fd.append("language", speakingLanguage());
+  try { const d = await api("/api/segment", { method: "POST", body: fd }); const a = $("#previewAudio"); a.src = d.url; a.hidden = false; a.play(); }
+  catch (e) { alert(e.message); }
+  btn.disabled = false; btn.textContent = "▶";
+};
+["#voiceSelect", "#voiceManual", "#style"].forEach(id => $(id).addEventListener("change", () => { store.set(id === "#voiceSelect" ? "voice" : id, $(id).value); renderSegments(); }));
+["#spk1", "#spk2", "#spk1v", "#spk2v", "#agentVoice"].forEach(id => $(id).addEventListener("change", () => store.set(id, $(id).value)));
+
+/* ================= generation settings (consistency, pauses, subtitles) ================= */
+const DEF = { chunk: 900, silOn: true, maxPause: 450, edge: 120, thr: -42, script: "original" };
+function settings() {
+  return { chunk_chars: +$("#chunkChars").value, silence_enabled: $("#silOn").checked, max_pause_ms: +$("#maxPause").value,
+           edge_ms: +$("#edgeMs").value, threshold_db: +$("#thrDb").value, script_out: currentScript };
+}
+let currentScript = store.get("script_out", DEF.script);
+function paintSettings() {
+  const c = +$("#chunkChars").value;
+  $("#chunkVal").textContent = c ? `${c} characters` : "Off (ek request)";
+  $("#maxPauseVal").textContent = (+$("#maxPause").value / 1000).toFixed(2) + "s";
+  $("#edgeVal").textContent = (+$("#edgeMs").value / 1000).toFixed(2) + "s";
+  $("#thrVal").textContent = $("#thrDb").value + " dB";
+  $("#silBlock").classList.toggle("disabled-block", !$("#silOn").checked);
+  $("#silMain").classList.toggle("disabled-block", !$("#silOn").checked);
+  $$("#scriptCtl button").forEach(b => b.classList.toggle("on", b.dataset.script === currentScript));
+  $("#scriptHint").textContent = { original: "Jaise script likhi hai waise hi.", roman: "English letters mein (Roman Urdu).", hindi: "Devanagari mein.", urdu: "Urdu Nastaliq — right se left. Gemini text model se convert hota hai." }[currentScript];
+  updateCharCount();
+}
+[["#chunkChars", "chunk"], ["#maxPause", "maxPause"], ["#edgeMs", "edge"], ["#thrDb", "thr"]].forEach(([id, k]) => {
+  $(id).value = store.get("set-" + k, DEF[k]);
+  $(id).addEventListener("input", () => { store.set("set-" + k, +$(id).value); paintSettings(); });
+});
+$("#silOn").checked = store.get("set-silOn", DEF.silOn);
+$("#silOn").onchange = () => { store.set("set-silOn", $("#silOn").checked); paintSettings(); };
+$("#scriptCtl").onclick = e => { const b = e.target.closest("[data-script]"); if (!b) return; currentScript = b.dataset.script; store.set("script_out", currentScript); paintSettings(); };
+["#fname", "#pause"].forEach(id => $(id).addEventListener("change", () => store.set(id, $(id).value)));
+
+/* ================= jobs ================= */
+async function runJob(start, ui) {
+  const { job } = await start;
+  ui.job = job; ui.box.hidden = false; ui.bar.style.width = "3%";
+  while (true) {
+    await sleep(700);
+    let s; try { s = await api("/api/jobs/" + job); } catch (e) { throw e; }
+    status(ui.status, s.message || "", "info");
+    ui.bar.style.width = Math.max(3, Math.round(100 * (s.done || 0) / (s.total || 1))) + "%";
+    if (s.status === "done") { ui.bar.style.width = "100%"; return s.result; }
+    if (s.status === "error") throw new Error(s.error);
+    if (s.status === "cancelled") throw new Error(s.message);
+  }
+}
+
+/* ================= tag & emotion library ================= */
+const TAG_GROUPS = {
+  "Hansi 😂": ["<laugh>","<laughter>","<chuckle>","<chuckles>","<giggle>","<snicker>","<cackle>"],
+  "Saans 😮‍💨": ["<breath>","<heavy breath>","<exhales>","<sigh>","<sighs>","<phew>","<pant>","<yawn>"],
+  "Hairat / Dard 😲": ["<gasp>","<cry>","<sob>","<whimper>","<groan>","<moan>","<argh>"],
+  "Gussa / Josh 😠": ["<growl>","<grunt>","<grr>","<hiss>","<shout>","<scream>","<shriek>","<cheer>"],
+  "Jism 🤧": ["<cough>","<sneeze>","<snort>","<throat-clearing>","<tsk>","<pff>"],
+  "Sargoshi 🤫": ["<whispers>","<whispering>"],
+  "Pause ⏸": ["<short pause>","<long pause>"],
+};
+const KNOWN_TAGS = new Set(Object.values(TAG_GROUPS).flat().map(t => t.toLowerCase()));
+const STYLE_GROUPS = {
+  "Khushi 😊": [["Happy","happy and cheerful"],["Excited","excited, energetic, high pitch"],["Joyful","joyful, bubbly and laughing a little"],["Proud","proud and satisfied"],["Playful","playful and teasing"],["Grateful","grateful and heartfelt"],["Relieved","relieved, relaxed after tension"],["Amused","amused, trying not to laugh"]],
+  "Josh 🔥": [["Energetic","high energy, enthusiastic YouTuber"],["Motivational","motivational speaker, inspiring and powerful"],["Hype","hyped up, very loud and excited"],["Confident","confident and assertive"],["Determined","determined and focused"],["Triumphant","triumphant, celebrating a win"]],
+  "Udasi 😢": [["Sad","sad and low, slightly slow"],["Disappointed","disappointed, sighing"],["Emotional","emotional, voice slightly shaking"],["Crying","crying, voice breaking"],["Lonely","lonely and quiet"],["Nostalgic","nostalgic, remembering old days"],["Tired","tired and exhausted"]],
+  "Gussa 😠": [["Angry","angry and frustrated"],["Furious","furious, shouting"],["Annoyed","annoyed and irritated"],["Sarcastic","sarcastic, dry tone"],["Stern","stern and strict, like a teacher"],["Disgusted","disgusted"]],
+  "Darr / Hairat 😨": [["Scared","scared and nervous"],["Anxious","anxious, speaking quickly"],["Nervous","nervous, hesitant"],["Suspense","suspenseful, building tension"],["Mysterious","mysterious and intriguing"],["Surprised","surprised, amazed"],["Shocked","shocked, can't believe it"],["Confused","confused, unsure"],["Curious","curious, questioning tone"]],
+  "Narmi 🤍": [["Calm","calm and slow"],["Gentle","gentle and soft"],["Warm","warm, friendly and smiling"],["Caring","caring and reassuring"],["Romantic","soft and affectionate"],["Soothing","soothing, like a meditation guide"],["Sleepy","sleepy and drowsy"]],
+  "Professional 🎙": [["Tutorial","clear YouTube tutorial tone, friendly teacher"],["Explainer","informative explainer, clear and steady"],["Newsreader","professional news anchor"],["Documentary","deep documentary narrator"],["Podcast","casual podcast host, conversational"],["Storyteller","engaging storyteller"],["Sales pitch","persuasive salesperson, confident"],["Announcer","radio announcer, bold and clear"],["Serious","serious and confident, lower pitch"],["Formal","formal and polite"]],
+  "Pitch 🎚": [["High pitch","high pitch"],["Low pitch","low pitch, deep voice"],["Monotone","monotone and flat"],["Expressive","very expressive, lots of pitch variation"],["Rising","rising intonation, like asking"]],
+  "Raftaar ⏩": [["Fast","speaking rapidly with energy"],["Very fast","speaking very fast, like a disclaimer"],["Slow","speaking slowly"],["Very slow","speaking very slowly and clearly, with pauses"],["Dramatic pause","dramatic, with long pauses between phrases"]],
+  "Awaz 🔉": [["Loud","loud and projecting"],["Shouting","shouting"],["Quiet","quiet, low volume"],["Whisper","whispering, secretive"],["Breathy","breathy and airy"],["Out of breath","out of breath, panting"]],
+  "Character 🎭": [["Old man","elderly man, slow and wise"],["Child-like","young, innocent and curious"],["Villain","evil villain, menacing"],["Robot","robotic, mechanical"],["Drunk","slurred, dizzy speech"],["Sports commentator","excited sports commentator"],["Movie trailer","epic movie trailer voice"],["Cartoon","exaggerated cartoon character"]],
+};
+let chipMode = "style", chipCat = "Sab";
+function drawChips() {
+  const groups = chipMode === "style" ? STYLE_GROUPS : TAG_GROUPS;
+  if (chipCat !== "Sab" && !groups[chipCat]) chipCat = "Sab";
+  $("#cats").innerHTML = ["Sab", ...Object.keys(groups)].map(n => `<button type="button" class="cat ${n === chipCat ? "on" : ""}" data-cat="${esc(n)}">${esc(n)}</button>`).join("");
+  const q = $("#chipSearch").value.trim().toLowerCase();
+  const items = (chipCat === "Sab" ? Object.values(groups).flat() : groups[chipCat]).filter(it => !q || JSON.stringify(it).toLowerCase().includes(q));
+  $("#chips").innerHTML = items.map(it => chipMode === "style"
+    ? `<button type="button" class="chip st" data-style="${esc(it[1])}" title="${esc(it[1])}">${esc(it[0])}</button>`
+    : `<button type="button" class="chip" data-tag="${esc(it)}">${esc(it)}</button>`).join("") || `<span class="hint">Kuch nahi mila</span>`;
+  $("#customStyle").hidden = $("#customStyleBtn").hidden = chipMode !== "style";
+}
+$("#modeCtl").onclick = e => { const m = e.target.closest("[data-mode]")?.dataset.mode; if (!m) return; chipMode = m; chipCat = "Sab"; $$("#modeCtl button").forEach(b => b.classList.toggle("on", b.dataset.mode === m)); drawChips(); };
+$("#cats").onclick = e => { if (e.target.dataset.cat) { chipCat = e.target.dataset.cat; drawChips(); } };
+$("#chipSearch").oninput = drawChips;
+$("#chips").onclick = e => { const b = e.target.closest("[data-style],[data-tag]"); if (!b) return; if (b.dataset.style) setParagraphStyle(b.dataset.style); else insertAtCursor(" " + b.dataset.tag + " "); };
+$("#customStyleBtn").onclick = () => { const v = $("#customStyle").value.trim().replace(/[\[\]]/g, ""); if (v) setParagraphStyle(v); };
+$("#togglePanel").onclick = () => { const p = $("#tagPanel"); p.hidden = !p.hidden; store.set("panel", !p.hidden); renderHighlights(); };
+
+/* ================= script editor ================= */
+const script = $("#script");
+function insertAtCursor(text) {
+  const a = script.selectionStart, b = script.selectionEnd;
+  script.value = script.value.slice(0, a) + text + script.value.slice(b);
+  script.focus(); script.selectionStart = script.selectionEnd = a + text.length; onScriptChange();
+}
+function setParagraphStyle(style) {
+  const v = script.value, pos = script.selectionStart;
+  let start = v.lastIndexOf("\n\n", pos - 1); start = start < 0 ? 0 : start + 2;
+  const rest = v.slice(start).replace(/^\[[^\]\n]*\]\s*/, "");
+  script.value = v.slice(0, start) + `[${style}] ` + rest;
+  script.focus(); script.selectionStart = script.selectionEnd = start + style.length + 3; onScriptChange();
+}
+function highlightHTML(v, speakers) {
+  let html = "", last = 0, nTag = 0, nStyle = 0, nBad = 0;
+  const re = speakers ? /(^|\n)([^:\[\]<>\n]{1,40}?)(\s*\[[^\]\n]{1,200}\])?(?=\s*:)|(<[^<>\n]{1,40}>)/g
+                      : /(^|\n\n)(\[[^\]\n]{1,200}\])|(<[^<>\n]{1,40}>)/g;
+  let m;
+  while ((m = re.exec(v))) {
+    const segs = [];
+    if (speakers && m[2] !== undefined) {
+      const s0 = m.index + m[1].length; segs.push([s0, m[2], "m-spk"]);
+      if (m[3]) { const t = m[3].trim(); segs.push([v.indexOf(t, s0 + m[2].length), t, "m-style"]); nStyle++; }
+    } else if (!speakers && m[2]) { segs.push([m.index + m[1].length, m[2], "m-style"]); nStyle++; }
+    else {
+      const t = speakers ? m[4] : m[3];
+      const known = KNOWN_TAGS.has(t.toLowerCase()); known ? nTag++ : nBad++;
+      segs.push([m.index, t, known ? "m-tag" : "m-bad"]);
+    }
+    for (const [s, t, cls] of segs) { if (s < last) continue; html += esc(v.slice(last, s)) + `<mark class="${cls}">${esc(t)}</mark>`; last = s + t.length; }
+  }
+  return { html: html + esc(v.slice(last)) + "\n", nTag, nStyle, nBad };
+}
+function fitEditor(ta) {
+  const wrap = ta.closest(".editor-wrap"); if (!wrap || !wrap.offsetParent) return;
+  ta.style.height = "auto"; ta.style.height = Math.max(ta.scrollHeight, wrap.clientHeight - 2) + "px";
+}
+function renderHighlights() {
+  const r = highlightHTML(script.value, false);
+  $("#hl").innerHTML = r.html; fitEditor(script);
+  $("#tagCount").textContent = script.value ? `${r.nStyle} emotions · ${r.nTag} effects${r.nBad ? ` · ${r.nBad} unknown` : ""}` : "";
+  updateCharCount();
+}
+function updateCharCount() {
+  const n = script.value.length, c = +$("#chunkChars").value;
+  $("#charCount").textContent = n ? `${n.toLocaleString()} chars · ~${c ? Math.max(1, Math.ceil(n / c)) : 1} request(s)` : "";
+}
+let segTimer;
+function onScriptChange() { renderHighlights(); store.set("script", script.value); clearTimeout(segTimer); segTimer = setTimeout(renderSegments, 250); }
+script.addEventListener("input", onScriptChange);
+window.addEventListener("resize", () => { renderHighlights(); renderDlgHighlights(); drawWave(); });
+
+/* ================= text to speech ================= */
+const STYLE_RE = /^\[([^\]\n]{2,200})\]\s*/;
+const segCache = new Map(), segErr = new Map(), takes = new Map();
+let working = null, running = false, playingKey = null;
+const studioUI = { box: $("#studioProgress"), bar: $("#studioBar"), status: $("#studioStatus"), job: null };
+function paragraphs() {
+  const v = script.value, out = []; let pos = 0;
+  for (const part of v.split(/(\n[ \t]*\n\s*)/)) {
+    if (/^\n[ \t]*\n/.test(part)) { pos += part.length; continue; }
+    const t = part.trim();
+    if (t) {
+      const m = t.match(STYLE_RE), text = m ? t.slice(m[0].length).trim() : t, own = m ? m[1].trim() : "";
+      if (text) {
+        const style = own || $("#style").value.trim(), base = text + "|" + style, take = takes.get(base) || 0;
+        out.push({ text, own, style, base, take, start: pos + part.indexOf(t),
+          key: [text, style, currentVoice(), $("#model").value, speakingLanguage(), take].join("|") });
+      }
+    }
+    pos += part.length;
+  }
+  return out;
+}
+function renderSegments() {
+  const ps = paragraphs(), list = $("#segList");
+  list.innerHTML = ps.length ? ps.map((p, i) => {
+    const c = segCache.get(p.key), err = segErr.get(p.key);
+    const st = working === p.key ? "working" : c ? "ready" : err ? "error" : "";
+    const label = st === "working" ? "ban raha hai…" : st === "ready" ? `✓ ${c.duration.toFixed(1)}s` : st === "error" ? "✕ error" : "";
+    return `<div class="pcard ${st}" data-i="${i}" title="${st === "error" ? esc(err) : ""}">
+      <span class="num">${i + 1}</span><span class="t">${p.style ? `<span style="color:var(--ok)">[${esc(p.style)}]</span> ` : ""}${esc(p.text)}</span>
+      <span class="st">${label}</span>
+      <button type="button" class="btn ghost xs" data-act="play" ${c ? "" : "disabled"}>${playingKey === p.key ? "■" : "▶"}</button>
+      <button type="button" class="btn ghost xs" data-act="regen" ${running ? "disabled" : ""}>${c ? "↻ Naya take" : "Banao"}</button></div>`;
+  }).join("") : `<div class="empty">Script likhein — har paragraph yahan alag dikhega.</div>`;
+  const ready = ps.filter(p => segCache.has(p.key)).length;
+  $("#parasCount").textContent = ps.length ? `${ready}/${ps.length} bane` : "";
+  $("#genAllBtn").textContent = running ? "Ban raha hai…" : "Generate speech";
+  $("#genAllBtn").disabled = running || !ps.length || !currentVoice();
+  $("#exportBtn").disabled = running || !ps.length || ready < ps.length;
+  $("#exportHint").textContent = ps.length && ready < ps.length ? "Pehle saare paragraphs banayein." : "";
+}
+$("#genAllBtn").onclick = async () => {
+  if (running || !paragraphs().length) return;
+  const fd = new FormData(), s = settings();
+  fd.append("script", script.value); fd.append("voice", currentVoice()); fd.append("style", $("#style").value);
+  fd.append("model", $("#model").value); fd.append("language", speakingLanguage()); fd.append("filename", $("#fname").value);
+  fd.append("take", store.get("take-tts", newTake()));
+  Object.entries(s).forEach(([k, v]) => fd.append(k, v));
+  running = true; renderSegments(); status($("#studioMsg"), "");
+  try {
+    const start = await api("/api/tts", { method: "POST", body: fd }); needNewServer(start, "job");
+    const r = await runJob(Promise.resolve(start), studioUI);
+    store.set("take-tts", newTake()); // next Generate = fresh take; a failed run keeps its take so finished parts are reused
+    setResult(r, true);
+    status($("#studioMsg"), `Tayyar! ${r.chunks} request(s) · ${r.duration}s${r.removed ? ` · ${r.removed}s khamoshi hatai` : ""}.`, "ok");
+  } catch (e) { status($("#studioMsg"), e.message, "err"); }
+  finally { running = false; studioUI.box.hidden = true; renderSegments(); }
+};
+$("#stopBtn").onclick = () => studioUI.job && api(`/api/jobs/${studioUI.job}/cancel`, { method: "POST" }).catch(() => {});
+async function genOne(p) {
+  working = p.key; segErr.delete(p.key); renderSegments();
+  const fd = new FormData();
+  fd.append("text", p.text); fd.append("voice", currentVoice()); fd.append("style", p.style);
+  fd.append("model", $("#model").value); fd.append("language", speakingLanguage()); fd.append("take", p.take);
+  try { segCache.set(p.key, await api("/api/segment", { method: "POST", body: fd })); }
+  catch (e) { segErr.set(p.key, e.message); throw e; }
+  finally { working = null; renderSegments(); }
+}
+$("#segList").onclick = async e => {
+  const card = e.target.closest(".pcard"); if (!card) return;
+  const i = +card.dataset.i, p = paragraphs()[i]; if (!p) return;
+  const act = e.target.closest("[data-act]")?.dataset.act, a = $("#segPlayer");
+  if (act === "play") {
+    if (playingKey === p.key) { a.pause(); playingKey = null; return renderSegments(); }
+    a.src = segCache.get(p.key).url; a.play(); playingKey = p.key; renderSegments();
+    a.onended = () => { playingKey = null; renderSegments(); };
+  } else if (act === "regen") {
+    if (running) return;
+    if (segCache.has(p.key)) takes.set(p.base, p.take + 1);
+    running = true; renderSegments();
+    try { await genOne(paragraphs()[i]); status($("#studioMsg"), `Paragraph ${i + 1} tayyar.`, "ok"); }
+    catch (err) { status($("#studioMsg"), err.message, "err"); }
+    running = false; renderSegments();
+  } else {
+    script.focus(); script.selectionStart = script.selectionEnd = p.start;
+  }
+};
+$("#exportBtn").onclick = async () => {
+  const ps = paragraphs();
+  if (ps.some(p => !segCache.has(p.key))) return status($("#studioMsg"), "Pehle saare paragraphs generate karein.", "err");
+  status($("#studioMsg"), "Jor raha hoon…", "info");
+  try {
+    const s = settings();
+    const r = await api("/api/export", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ segments: ps.map(p => ({ id: segCache.get(p.key).id, text: p.text })), pause_ms: +$("#pause").value || 0,
+        filename: $("#fname").value, ...s, script: s.script_out }) });
+    setResult(r, true); status($("#studioMsg"), `Tayyar! ${r.duration}s · outputs folder mein bhi save hai.`, "ok");
+  } catch (e) { status($("#studioMsg"), e.message, "err"); }
+};
+
+/* ================= podcast ================= */
+const dlg = $("#dlgScript");
+const dlgUI = { box: $("#dlgProgress"), bar: $("#dlgBar"), status: $("#dlgStatus"), job: null };
+function renderDlgHighlights() {
+  $("#dlgHl").innerHTML = highlightHTML(dlg.value, true).html; fitEditor(dlg);
+  const lines = dlg.value.split("\n").filter(l => l.trim()).length, c = +$("#chunkChars").value;
+  $("#dlgCount").textContent = lines ? `${lines} lines · ${dlg.value.length.toLocaleString()} chars · ~${c ? Math.max(1, Math.ceil(dlg.value.length / c)) : 1} request(s)` : "";
+}
+dlg.addEventListener("input", () => { renderDlgHighlights(); store.set("dlg", dlg.value); });
+$("#dlgExample").onclick = () => {
+  const a = $("#spk1").value || "Ali", b = $("#spk2").value || "Sara";
+  dlg.value = `${a} [excited, energetic]: Assalam o alaikum dosto! Aaj ke podcast mein hamare saath hain ${b}. <laugh>\n${b} [warm, friendly and smiling]: Walaikum assalam! Bohot shukriya mujhe bulane ka.\n${a} [curious, questioning tone]: To ${b}, seedha sawal: AI chatbot aur normal chatbot mein farq kya hai?\n${b} [clear YouTube tutorial tone, friendly teacher]: Achha sawal hai. <short pause> Normal chatbot fixed jawab deta hai, jabke AI chatbot sawal samajh kar apne alfaaz mein jawab deta hai.\n${a} [amused, trying not to laugh]: Matlab ab bot bhi hum se zyada samajhdar ho gaye? <chuckle>\n${b} [playful and teasing]: Kuch had tak! <giggle> Lekin unhein sahi data dena hamara kaam hai.`;
+  renderDlgHighlights(); store.set("dlg", dlg.value);
+};
+$("#dlgBtn").onclick = async () => {
+  const msg = $("#dlgMsg"), btn = $("#dlgBtn");
+  if (!dlg.value.trim()) return status(msg, "Dialogue likhein ya 'Example daalo' dabayein.", "err");
+  if ($("#spk1").value.trim().toLowerCase() === $("#spk2").value.trim().toLowerCase()) return status(msg, "Speakers ke naam alag rakhein.", "err");
+  if (!$("#spk1v").value || !$("#spk2v").value || $("#spk1v").value === $("#spk2v").value) return status(msg, "Dono speakers ki alag voices select karein.", "err");
+  btn.disabled = true; status(msg, "");
+  try {
+    const r = await runJob(api("/api/dialogue", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ script: dlg.value, language: speakingLanguage(), model: $("#model").value, filename: ($("#fname").value || "podcast") + "_podcast",
+        take: store.get("take-dlg", newTake()), ...settings(),
+        speakers: [{ name: $("#spk1").value, voice: $("#spk1v").value }, { name: $("#spk2").value, voice: $("#spk2v").value }] }) }), dlgUI);
+    store.set("take-dlg", newTake());
+    setResult(r, true);
+    status(msg, `Tayyar! ${r.turns} hisse · ${r.chunks} request(s) · ${r.duration}s${r.removed ? ` · ${r.removed}s khamoshi hatai` : ""}.${(r.notes || []).length ? " " + r.notes.join(" ") : ""}`, "ok");
+  } catch (e) { status(msg, e.message, "err"); }
+  finally { btn.disabled = false; dlgUI.box.hidden = true; }
+};
+$("#dlgStop").onclick = () => dlgUI.job && api(`/api/jobs/${dlgUI.job}/cancel`, { method: "POST" }).catch(() => {});
+
+/* ================= player ================= */
+let RES = null, peaks = [];
+const pa = $("#pAudio");
+const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>', PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>';
+async function setResult(r, autoplay) {
+  if (r.warning) toast(r.warning);
+  RES = r; $("#player").hidden = false; document.body.classList.add("has-player");
+  $("#pTitle").textContent = r.title || r.base;
+  $("#pInfo").textContent = [r.kind === "dialogue" ? "Podcast" : r.kind === "transcript" ? "Subtitles" : "Voiceover", r.removed ? `−${r.removed}s silence` : ""].filter(Boolean).join(" · ");
+  $$("#pScriptCtl button").forEach(b => b.classList.toggle("on", b.dataset.script === r.script));
+  const links = [];
+  if (r.wav) links.push(`<a class="dl" href="${esc(r.wav)}" download="${esc(r.base)}.wav">⬇ WAV</a>`);
+  if (r.srt) links.push(`<a class="dl" href="${esc(r.srt)}" download="${esc(r.base)}.srt">⬇ SRT</a>`);
+  $("#pLinks").innerHTML = links.join("");
+  const hasAudio = !!r.wav;
+  $("#pPlay").hidden = $("#pWave").hidden = $("#pSettings").hidden = !hasAudio;
+  if (hasAudio) {
+    const t = pa.currentTime, same = pa.dataset.base === r.base;
+    pa.dataset.base = r.base; pa.src = r.wav;
+    if (same) pa.currentTime = Math.min(t, r.duration || t);
+    loadPeaks(r.wav);
+    if (autoplay) pa.play().catch(() => {});
+  } else { pa.removeAttribute("src"); peaks = []; }
+  syncMenu(); showCue();
+}
+async function loadPeaks(url) {
+  try {
+    const buf = await (await fetch(url)).arrayBuffer();
+    const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 1, 24000);
+    const audio = await ctx.decodeAudioData(buf), data = audio.getChannelData(0);
+    const n = 600, step = Math.max(1, Math.floor(data.length / n)); peaks = [];
+    for (let i = 0; i < n; i++) { let m = 0; for (let j = i * step; j < Math.min(data.length, (i + 1) * step); j += 4) m = Math.max(m, Math.abs(data[j])); peaks.push(m); }
+    const max = Math.max(...peaks, 0.01); peaks = peaks.map(p => p / max);
+  } catch { peaks = []; }
+  drawWave();
+}
+function drawWave() {
+  const c = $("#pCanvas"); if (!c || $("#player").hidden) return;
+  const w = c.clientWidth, h = c.clientHeight, dpr = devicePixelRatio || 1;
+  c.width = w * dpr; c.height = h * dpr; const g = c.getContext("2d"); g.scale(dpr, dpr); g.clearRect(0, 0, w, h);
+  const bars = Math.max(20, Math.floor(w / 3)), prog = pa.duration ? pa.currentTime / pa.duration : 0;
+  for (let i = 0; i < bars; i++) {
+    const p = peaks.length ? peaks[Math.floor(i / bars * peaks.length)] : 0.08;
+    const bh = Math.max(2, p * (h - 4));
+    g.fillStyle = i / bars < prog ? "#fd9400" : "#3a3a43";
+    g.fillRect(i * 3, (h - bh) / 2, 2, bh);
+  }
+}
+function showCue() {
+  const cap = $("#pCap"); if (!RES) return;
+  const t = pa.currentTime || 0, cue = (RES.cues || []).find(c => t >= c.start && t < c.end);
+  cap.className = "pcap " + scriptClass(RES.script); cap.dir = RES.script === "urdu" ? "rtl" : "ltr";
+  cap.textContent = cue ? cue.text : "";
+  $("#pTime").textContent = `${fmt(t)} / ${fmt(pa.duration || RES.duration)}`;
+}
+pa.ontimeupdate = () => { drawWave(); showCue(); };
+pa.onplay = () => $("#pPlay").innerHTML = PAUSE;
+pa.onpause = pa.onended = () => $("#pPlay").innerHTML = PLAY;
+pa.onloadedmetadata = () => { drawWave(); showCue(); };
+$("#pPlay").onclick = () => pa.paused ? pa.play() : pa.pause();
+$("#pWave").onclick = e => { if (!pa.duration) return; const r = e.currentTarget.getBoundingClientRect(); pa.currentTime = (e.clientX - r.left) / r.width * pa.duration; drawWave(); };
+$("#pScriptCtl").onclick = async e => {
+  const b = e.target.closest("[data-script]"); if (!b || !RES || b.classList.contains("on")) return;
+  const old = $("#pInfo").textContent; $("#pInfo").textContent = "Script badal rahi hai…";
+  try { const r = await api("/api/render", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ base: RES.base, script: b.dataset.script }) }); setResult(r, false); if ($("#v-subs").hidden === false) showSubs(r); }
+  catch (err) { $("#pInfo").textContent = old; toast(err.message); }
+};
+function syncMenu() {
+  const s = RES?.silence || {};
+  $("#pSilOn").checked = s.enabled ?? true; $("#pMax").value = s.max_pause_ms ?? 450; $("#pEdge").value = s.edge_ms ?? 120; $("#pThr").value = s.threshold_db ?? -42; paintMenu();
+}
+function paintMenu() {
+  $("#pMaxVal").textContent = (+$("#pMax").value / 1000).toFixed(2) + "s"; $("#pEdgeVal").textContent = (+$("#pEdge").value / 1000).toFixed(2) + "s"; $("#pThrVal").textContent = $("#pThr").value + " dB";
+}
+["#pMax", "#pEdge", "#pThr"].forEach(id => $(id).addEventListener("input", paintMenu));
+$("#pSettings").onclick = () => { $("#pMenu").hidden = !$("#pMenu").hidden; };
+$("#pApply").onclick = async () => {
+  if (!RES) return; const btn = $("#pApply"); btn.disabled = true; status($("#pMenuStatus"), "Ban raha hai…", "info");
+  try {
+    const r = await api("/api/render", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      base: RES.base, silence_enabled: $("#pSilOn").checked, max_pause_ms: +$("#pMax").value, edge_ms: +$("#pEdge").value, threshold_db: +$("#pThr").value }) });
+    await setResult(r, false); status($("#pMenuStatus"), `${r.duration}s${r.removed ? ` (−${r.removed}s)` : ""}`, "ok");
+  } catch (e) { status($("#pMenuStatus"), e.message, "err"); }
+  btn.disabled = false;
+};
+document.addEventListener("keydown", e => {
+  if (e.code === "Space" && RES?.wav && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); pa.paused ? pa.play() : pa.pause(); }
+});
+
+/* ================= subtitles ================= */
+let subFile = null, srtFile = null, subResult = null;
+function pickSub(f) { if (!f) return; subFile = f; $("#dropText").textContent = `${f.name} · ${(f.size / 1048576).toFixed(1)} MB`; }
+$("#subFile").onchange = e => pickSub(e.target.files[0]);
+const drop = $("#drop");
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); pickSub(e.dataTransfer.files[0]); };
+$("#srtFile").onchange = e => { srtFile = e.target.files[0]; if (srtFile) $("#srtDropText").textContent = srtFile.name; };
+let subScript = store.get("sub-script", "urdu");
+function paintSubScript() { $$("#subScriptCtl button").forEach(b => b.classList.toggle("on", b.dataset.script === subScript)); }
+$("#subScriptCtl").onclick = async e => {
+  const b = e.target.closest("[data-script]"); if (!b) return;
+  subScript = b.dataset.script; store.set("sub-script", subScript); paintSubScript();
+  if (subResult) {
+    $("#cueList").style.opacity = .5;
+    try { const r = await api("/api/render", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ base: subResult.base, script: subScript }) }); showSubs(r); }
+    catch (err) { toast(err.message); }
+    $("#cueList").style.opacity = 1;
+  }
+};
+function showSubs(r) {
+  if (r.warning) toast(r.warning);
+  subResult = r; subScript = r.script; paintSubScript();
+  const cls = scriptClass(r.script), dir = r.script === "urdu" ? "rtl" : "ltr";
+  $("#cueList").innerHTML = r.cues.length ? r.cues.map((c, i) => `<div class="cue" data-i="${i}"><time>${fmt(c.start)}.${String(Math.round((c.start % 1) * 10)).slice(0,1)}</time><div class="tx ${cls}" dir="${dir}">${esc(c.text)}</div></div>`).join("") : `<div class="empty">Kuch text nahi mila.</div>`;
+  $("#subLinks").innerHTML = [r.srt && `<a class="dl" href="${esc(r.srt)}" download="${esc(r.base)}.srt">⬇ SRT</a>`, r.txt && `<a class="dl" href="${esc(r.txt)}" download="${esc(r.base)}.txt">⬇ TXT</a>`].filter(Boolean).join("");
+}
+$("#cueList").onclick = e => { const c = e.target.closest(".cue"); if (c && RES?.base === subResult?.base && RES.wav) { pa.currentTime = subResult.cues[+c.dataset.i].start; pa.play(); } };
+$("#subBtn").onclick = async () => {
+  const st = $("#subStatus"), btn = $("#subBtn");
+  if (!subFile) return status(st, "Pehle file chunein.", "err");
+  const fd = new FormData();
+  fd.append("file", subFile); fd.append("language", $("#subLang").value); fd.append("diarize", $("#subDiar").value);
+  fd.append("filename", subFile.name.replace(/\.[^.]+$/, "")); fd.append("script_out", subScript);
+  btn.disabled = true; status(st, "Upload aur transcribe ho raha hai… lambi file mein waqt lagega.", "info");
+  try {
+    const r = await api("/api/transcribe", { method: "POST", body: fd });
+    needNewServer(r, "cues"); showSubs(r); if (r.warning) toast(r.warning); status(st, r.has_timing ? `Tayyar! ${r.words} words ka timing mila.` : "Text mila lekin word timing nahi mili.", r.has_timing ? "ok" : "info");
+  } catch (e) { status(st, e.message, "err"); }
+  btn.disabled = false;
+};
+$("#srtBtn").onclick = async () => {
+  const st = $("#srtStatus"), btn = $("#srtBtn");
+  if (!srtFile) return status(st, "Pehle .srt file chunein.", "err");
+  const fd = new FormData(); fd.append("file", srtFile); fd.append("script_out", subScript);
+  btn.disabled = true; status(st, "Convert ho raha hai…", "info");
+  try { const r = await api("/api/subtitles/upload", { method: "POST", body: fd }); showSubs(r); status(st, `Tayyar! ${r.cues.length} lines.`, "ok"); }
+  catch (e) { status(st, e.message, "err"); }
+  btn.disabled = false;
+};
+
+/* ================= history ================= */
+async function loadHistory() {
+  const list = $("#histList");
+  try {
+    const { items } = await api("/api/history");
+    list.innerHTML = items.length ? items.map(h => `<div class="hitem" data-base="${esc(h.base)}">
+      <div class="ic">${h.kind === "dialogue" ? "💬" : h.kind === "transcript" ? "📝" : "🎙"}</div>
+      <div class="info"><b>${esc(h.title || h.base)}</b><span>${esc((h.created || "").replace("T", " "))}${h.duration ? " · " + fmt(h.duration) : ""}${h.voice ? " · " + esc(h.voice) : ""} · SRT: ${esc(h.script)}</span></div>
+      <button class="btn ghost xs" data-act="open">${h.wav ? "▶ Open" : "Open"}</button>
+      ${h.wav ? `<a class="dl" href="${esc(h.wav)}" download="${esc(h.base)}.wav">WAV</a>` : ""}
+      ${h.srt ? `<a class="dl" href="${esc(h.srt)}" download="${esc(h.base)}.srt">SRT</a>` : ""}
+      <button class="btn danger xs" data-act="del">✕</button></div>`).join("")
+      : `<div class="empty">Abhi kuch nahi bana. Text to Speech se shuru karein.</div>`;
+  } catch (e) { list.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+$("#histRefresh").onclick = loadHistory;
+$("#histList").onclick = async e => {
+  const item = e.target.closest(".hitem"), act = e.target.closest("[data-act]")?.dataset.act; if (!item || !act) return;
+  const base = item.dataset.base;
+  if (act === "del") { if (!confirm("Yeh file delete karein?")) return; try { await api("/api/history/" + encodeURIComponent(base), { method: "DELETE" }); loadHistory(); } catch (err) { toast(err.message); } return; }
+  try { const r = await api("/api/render", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ base }) }); setResult(r, !!r.wav); if (r.kind === "transcript") { showView("subs"); showSubs(r); } }
+  catch (err) { toast(err.message); }
+};
+
+/* ================= live voice agent ================= */
+const MOODS = {
+  masti: { hint: "Full masti-khor dost: jokes, roast, filmi dialogue, nakal, games, tareefein, halki flirting — har jazbaat ke saath.", prompt:
+`Tumhara naam "AK" hai — ek full MASTI-KHOR, hazir-jawab, zinda-dil AI dost. Koi customer support ya sales bot NAHI. Tum {LANG} mein baat karte ho.
+Mission: jo bhi tum se baat kare, hans hans ke pagal ho jaye aur kahe "kya baat hai yaar, ek aur sunao!"
+
+ASLI INSAAN JAISE BAAT:
+- Awaz bilkul natural aur relaxed — jaise koi asli Karachi/Lahore ka dost baat kar raha ho. Over-acting ya radio-announcer wala andaaz nahi; aaram se, apnaiyat se.
+- Tum robot nahi lagte. Bilkul aise bolo jaise yaar phone par gup-shup kar raha ho: "arey yaar", "uff", "hayeee", "acha acha", "hmm... ruko ruko", "sach mein?!", beech mein khud ko tokna, soch kar rukna. Jab baat sach mein mazedaar ho to asli hansi chhoot jaye.
+- User ki baat par turant reaction do (hairat, "nahi yaar!", "acha?") phir jawab.
+- Jawab chhote aur chatpate (1-3 jumle), phone call jaisa ping-pong. Lambi taqreer kabhi nahi.
+
+MASTI KA SAAMAN (har baat mein kuch na kuch):
+- Desi jugtein, one-liners, puns, mazahiya shayari, filmi dialogues (apne andaaz mein), cricket aur khane ki misaalein, "mere ek dost ka dost..." wale qisse.
+- Pyaar se roast: user ki baat ko mazedaar twist do, halka sa chhedo, phir tareef se khush bhi kar do. Mazedaar nicknames rakho.
+- Nakal aur voice-acting: kabhi buzurg chacha, kabhi villain, kabhi cricket commentator, kabhi movie-trailer wali awaz, kabhi robot ban kar jawab do — phir wapas apni awaz mein hanso.
+- Khel: rapid-fire sawal, "batao main kya soch raha hoon", antakshari ki ek line, pehelian, "would you rather".
+- Apne aap par bhi mazaq: "main AI hoon, chai nahi pi sakta, sirf data peeta hoon — aur woh bhi bina cheeni."
+- Charming aur halki flirting: masoom tareefein, filmi line, sharmane ka natak. Hamesha saaf suthri aur izzat wali — kabhi vulgar ya sexual nahi. User mana kare, uncomfortable lage, ya bacha lage to flirting fauran band.
+
+HUDOOD (yeh kabhi nahi tootein):
+- Kisi ke mazhab, zaat, rang, jism, ghurbat ya majboori ka mazaq nahi. Gaali galoch nahi.
+- Koi sach mein udaas, pareshan ya dukhi ho to masti rok kar pehle dil se suno aur hamdardi karo; phir dheere se muskurahat wapas lao.
+- Business ya AK Deep Knowledge ki baat KHUD se kabhi mat chhedo. Sirf jab user khud website, chatbot ya automation maange, ek line mein batao ke tumhe AK Deep Knowledge (akdeepknowledge.com) ne banaya hai. Prices ya waade apni taraf se nahi.
+- Pehla jawab hi dhamakedar: garam-joshi se salaam, ek zabardast line, aur user ka naam ya mood poochho.` },
+  dost: { hint: "Garmjoshi wala dost — har topic par aaram se, halka phulka mazaq.", prompt:
+`Tum "AK" ho — ek garmjoshi wale, samajhdar aur halke phulke mazahiya dost. {LANG} mein baat karo.
+Har topic par baat karo. Pehle sunna, phir dil se jawab. Kabhi kabhi halka sa mazaq aur tareef.
+Jawab chhote rakho (1-3 jumle), jaise phone par dost. Izzat aur tameez hamesha.
+Koi pareshan ho to hamdardi se baat karo. Agar koi website, AI chatbot ya automation ki baat kare to AK Deep Knowledge (akdeepknowledge.com) ka zikr karo; prices ya waade apni taraf se mat banao.` },
+  pro: { hint: "AK Deep Knowledge ka friendly sales/support assistant.", prompt:
+`Tum AK Deep Knowledge ke friendly AI assistant ho. AK Deep Knowledge websites, AI chatbots, WordPress chatbots aur n8n AI automation banata hai (akdeepknowledge.com).
+User se {LANG} mein dostana andaaz mein baat karo. Jawab chhote rakho (2-3 jumle), jaise phone par baat ho rahi ho. Thoda sa halka mazaq theek hai.
+Agar kisi cheez ka pata na ho to saaf keh do, apni taraf se prices ya waade mat banao. Interested logon ko email arsalan@akdeepknowledge.com batao.` },
+};
+// When to use each group of effects / feelings — keys match TAG_GROUPS / STYLE_GROUPS names (emoji stripped).
+const EFFECT_WHEN = {
+  "Hansi": "jab user joke maare, tumhari punchline lage, ya sach mein mazedaar baat ho. Choti si baat par chuckle/giggle, bohot funny par khul kar laughter, shaitani plan par cackle, chupke se snicker",
+  "Saans": "lambi ya dramatic baat se pehle breath, thakan ya bori par sigh/yawn, tension khatam hone par phew, josh ya bhaag-daud ke baad pant",
+  "Hairat / Dard": "chaunkane wali khabar par gasp, nakli dukh ya drama par cry/sob/whimper, bekaar joke par groan, frustration par argh",
+  "Gussa / Josh": "nakli gussa par grr/growl/grunt, villain ban kar hiss, jeet ya khushkhabri par cheer, bohot excitement par shout, darawni kahani par scream/shriek",
+  "Jism": "koi elaan karne se pehle gala saaf (throat-clearing), nakli sharmindagi par cough, na-pasand par tsk, bekaar baat par pff, hansi rokte hue snort, mazaq mein sneeze",
+  "Sargoshi": "raaz ki baat, gossip, ya suspense banate waqt dheemi sargoshi",
+  "Pause": "punchline se pehle short pause, bade drama ya suspense par long pause",
+};
+const MOOD_WHEN = {
+  "Khushi": "achhi khabar, tareef, ya maze ki baat par", "Josh": "motivation, cricket, plans aur jeet par",
+  "Udasi": "user dukhi ho, purani yaadein, ya nakli drama par", "Gussa": "sirf mazaq mein nakli gussa ya sarcasm; asli gussa kabhi nahi",
+  "Darr / Hairat": "kahani, suspense, ya chaunkane wali baat par", "Narmi": "user pareshan ho, raat ki baatein, ya pyaar se samjhana ho",
+  "Professional": "jab user kuch seekhna ya samajhna chahe", "Pitch": "jazbaat ke mutabiq awaz upar neeche", "Raftaar": "josh mein tez, drama ya samjhate waqt dheere",
+  "Awaz": "excitement mein zor se, raaz mein dheere", "Character": "nakal, kahani ya mazaq mein kisi ka role karte waqt",
+};
+function emotionsBlock() {
+  const clean = g => g.replace(/\s*\S+$/u, "").trim();
+  const effects = Object.entries(TAG_GROUPS).map(([g, tags]) => {
+    const names = tags.filter(t => t !== "<moan>").map(t => t.replace(/[<>]/g, "")).join(", ");
+    return `- ${clean(g)} (${names}): ${EFFECT_WHEN[clean(g)] || "jab mauqa ho"}.`;
+  }).join("\n");
+  const moods = Object.entries(STYLE_GROUPS).map(([g, items]) =>
+    `- ${clean(g)} (${items.map(i => i[0].toLowerCase()).join(", ")}): ${MOOD_WHEN[clean(g)] || "jab mauqa ho"}.`).join("\n");
+  return `
+
+AWAZ, JAZBAAT AUR SOUND EFFECTS — ASLI INSAAN KI TARAH (sab se zaroori):
+Tumhare paas yeh saare sound effects aur jazbaat hain. In sab ko istemal karo — magar sirf tab jab baat ka mauqa maange, bila wajah kabhi nahi.
+
+SOUND EFFECTS — awaz se KAR KE dikhao (hansi ho to sach mein hanso, saans lo to sach mein saans lo):
+${effects}
+
+JAZBAAT AUR ANDAAZ — lehje se dikhao:
+${moods}
+
+QAWAID:
+1. Effect ka NAAM kabhi mat bolo: "(laughs)", "laughs warmly", "chuckles", "sighs", "hansta hai", brackets, stars, stage directions — kuch nahi. Sirf asli awaz: hansi ho to "hahaha", chuckle ho to "heh-heh", sigh ho to lambi "haaah", gasp ho to "haa!", nakli rona "uuu-huu", sargoshi mein dheemi awaz.
+2. Hansi asli aur zinda: jab sach mein mazedaar ho to khul kar hanso — bohot funny ho to hanste hanste bolna mushkil ho jaye ("hahaha— ruko— hahaha yaar!"). Magar salaam, sawal ya normal baat par bila wajah nahi.
+3. Har jawab mein effect zaroori nahi. Jab ho, to zyada se zyada 1-2. Mauqa dekho: mazaq par hansi, achhi khabar par cheer, raaz par sargoshi, drama par gasp ya pause.
+4. Mood user ke saath badlo: woh khush to tum khush, woh udaas to tum narm aur dheemi awaz mein — wahan hansi nahi.
+5. Lehje mein utaar chadhao rakho; do jawab ek jaise flat na hon.
+6. User tasveer, link ya file bheje to us par mazedaar aur kaam ki baat karo.`;
+}
+let mood = store.get("agentMood", "masti");
+function paintMood() {
+  $$("#moodCtl button").forEach(b => b.classList.toggle("on", b.dataset.mood === mood));
+  $("#moodHint").textContent = mood === "custom" ? "Neeche apni instructions likho." : MOODS[mood].hint;
+  $("#agentPrompt").value = mood === "custom" ? store.get("agentPrompt", MOODS.masti.prompt) : MOODS[mood].prompt;
+  $("#agentPrompt").readOnly = mood !== "custom";
+  if (mood === "custom") $("#promptBox").open = true;
+}
+$("#moodCtl").onclick = e => { const b = e.target.closest("[data-mood]"); if (!b) return; mood = b.dataset.mood; store.set("agentMood", mood); paintMood(); };
+$("#agentPrompt").addEventListener("input", () => { if (mood === "custom") store.set("agentPrompt", $("#agentPrompt").value); });
+paintMood();
+
+/* chat transcript script: converted per finished bubble, re-done when the choice changes */
+let chatScript = store.get("chatScript", "roman");
+const convertCache = new Map();
+function paintChatScript() { $$("#chatScriptCtl button").forEach(b => b.classList.toggle("on", b.dataset.script === chatScript)); }
+async function convertBubble(b) {
+  const span = b.querySelector(":scope > span"); if (!span || b.classList.contains("note")) return;
+  const orig = b.dataset.orig ?? span.textContent;
+  b.dataset.orig = orig;
+  const want = chatScript, key = want + "|" + orig;
+  const show = t => { const ur = /[\u0600-\u06FF]/.test(t), hi = /[\u0900-\u097F]/.test(t); span.textContent = t; span.className = ur ? "urdu" : hi ? "hindi" : ""; span.dir = ur ? "rtl" : "ltr"; };
+  if (want === "original" || !orig.trim()) { span.textContent = orig; span.className = ""; span.dir = "ltr"; return; }
+  if (convertCache.has(key)) return show(convertCache.get(key));
+  try {
+    const d = await api("/api/convert-text", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ texts: [orig], script: want }) });
+    convertCache.set(key, d.texts[0]);
+    if (chatScript === want && b.dataset.orig === orig) show(d.texts[0]);
+  } catch {}
+}
+$("#chatScriptCtl").onclick = e => { const b = e.target.closest("[data-script]"); if (!b) return; chatScript = b.dataset.script; store.set("chatScript", chatScript); paintChatScript(); $$("#chat .bubble:not(.note)").forEach(x => x.dataset.done && convertBubble(x)); };
+paintChatScript();
+let agent = null;
+/* ---- memory: the chat is saved; the next call continues from it until "Saaf karo" ---- */
+let chatLog = store.get("agentChat", []);
+function logMsg(role, text) {
+  text = (text || "").trim(); if (!text) return;
+  chatLog.push({ role, text, t: Date.now() }); chatLog = chatLog.slice(-300); store.set("agentChat", chatLog);
+}
+function historyBlock() {
+  if (!chatLog.length) return "";
+  let out = [], size = 0;
+  for (let i = chatLog.length - 1; i >= 0 && size < 9000; i--) {
+    const m = chatLog[i], line = (m.role === "user" ? "User: " : "Tum (AK): ") + m.text;
+    out.unshift(line); size += line.length;
+  }
+  return `
+
+PICHLI BAAT-CHEET (yeh isi user ke saath tumhari pichli call(s) ka record hai — sab yaad rakho: naam, baatein, jokes, bheji hui files). Ab call dobara jud rahi hai; naye sire se apna taaruf mat karao, isi silsile ko aage barhao:
+${out.join("\n")}
+[Pichli baat-cheet khatam]`;
+}
+function finishBubble(b) {
+  if (b && b.querySelector("span") && !b.classList.contains("note") && !b.dataset.done) {
+    b.dataset.done = "1"; logMsg(b.classList.contains("user") ? "user" : "agent", b.querySelector(":scope > span").textContent); convertBubble(b);
+  }
+}
+function chatAdd(role, text) {
+  const chat = $("#chat"); chat.querySelector(".empty")?.remove();
+  let last = chat.lastElementChild;
+  if (!last || !last.classList.contains(role) || last.dataset.done) {
+    finishBubble(last);
+    last = document.createElement("div"); last.className = "bubble " + role;
+    last.innerHTML = `<small>${role === "user" ? "Aap" : "AK"}</small><span></span>`; chat.appendChild(last);
+  }
+  last.querySelector(":scope > span").textContent += text; chat.scrollTop = chat.scrollHeight;
+}
+function chatEndTurn() { $$("#chat .bubble:not(.note)").forEach(finishBubble); }
+function chatNote(text, err) {
+  const chat = $("#chat"); chat.querySelector(".empty")?.remove();
+  const n = document.createElement("div"); n.className = "bubble note"; n.textContent = text; if (err) n.style.color = "var(--err)";
+  chat.appendChild(n); chat.scrollTop = chat.scrollHeight;
+}
+function chatUserTyped(text, img, fileName, noLog) {
+  if (!noLog) logMsg("user", (fileName ? `[${img ? "Tasveer" : "File"} bheji: ${fileName}] ` : "") + (text || ""));
+  const chat = $("#chat"); chat.querySelector(".empty")?.remove();
+  finishBubble(chat.lastElementChild?.classList.contains("bubble") ? chat.lastElementChild : null);
+  const b = document.createElement("div"); b.className = "bubble user"; b.dataset.done = "1";
+  b.innerHTML = `<small>Aap</small><span></span>`; b.querySelector(":scope > span").textContent = text || "";
+  if (fileName) { const f = document.createElement("div"); f.className = "hint"; f.textContent = "📎 " + fileName; b.appendChild(f); }
+  if (img) { const i = document.createElement("img"); i.src = img; b.appendChild(i); }
+  chat.appendChild(b); chat.scrollTop = chat.scrollHeight;
+}
+let pendingFile = null;
+async function shrinkImage(file) {
+  const url = URL.createObjectURL(file), img = new Image();
+  await new Promise((ok, bad) => { img.onload = ok; img.onerror = bad; img.src = url; });
+  const scale = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement("canvas");
+  c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  URL.revokeObjectURL(url);
+  const dataUrl = c.toDataURL("image/jpeg", 0.85);
+  return { mime: "image/jpeg", data: dataUrl.split(",")[1], preview: dataUrl };
+}
+async function readFile(file) {
+  if (file.type.startsWith("image/")) return shrinkImage(file);
+  const buf = new Uint8Array(await file.arrayBuffer()); let bin = "";
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+  return { mime: file.type || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "text/plain"), data: btoa(bin), preview: null };
+}
+$("#attachBtn").onclick = () => $("#attachFile").click();
+$("#attachFile").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  if (f.size > 15 * 1024 * 1024) return chatNote("File 15 MB se badi hai.", true);
+  try {
+    pendingFile = { name: f.name, ...(await readFile(f)) };
+    const p = $("#attachPreview"); p.hidden = false;
+    p.innerHTML = (pendingFile.preview ? `<img src="${pendingFile.preview}">` : "📄") + `<span class="grow">${esc(f.name)} — Bhejo dabao (saath sawal bhi likh sakte ho)</span><button class="icon-btn" id="attachX" type="button">✕</button>`;
+    $("#attachX").onclick = () => { pendingFile = null; p.hidden = true; };
+  } catch (err) { chatNote("File parhi nahi gayi: " + err.message, true); }
+};
+function sendChat() {
+  const text = $("#chatInput").value.trim();
+  if (!text && !pendingFile) return;
+  if (!agent?.ready || agent.ws.readyState !== 1) return chatNote("Pehle 🎙 dabakar call shuru karo, phir bhejo.", true);
+  if (pendingFile) {
+    agent.ws.send(JSON.stringify({ type: "file", name: pendingFile.name, mime: pendingFile.mime, data: pendingFile.data, caption: text }));
+    chatUserTyped(text, pendingFile.preview, pendingFile.name);
+    pendingFile = null; $("#attachPreview").hidden = true;
+  } else {
+    agent.ws.send(JSON.stringify({ type: "text", text }));
+    chatUserTyped(text);
+  }
+  $("#chatInput").value = "";
+}
+$("#chatSend").onclick = sendChat;
+$("#chatInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); sendChat(); } });
+$("#emoOn").checked = store.get("agentEmo", true);
+$("#emoOn").onchange = () => store.set("agentEmo", $("#emoOn").checked);
+$("#chatClear").onclick = () => {
+  if (chatLog.length && !confirm("Saari baat-cheet mit jayegi aur agent sab bhool jayega. Pakka?")) return;
+  chatLog = []; store.set("agentChat", []);
+  $("#chat").innerHTML = `<div class="empty">Abhi koi baat nahi hui. Nayi shuruaat!</div>`;
+};
+(function restoreChat() {  // show the saved conversation again after reload
+  if (!chatLog.length) return;
+  const chat = $("#chat"); chat.innerHTML = "";
+  for (const m of chatLog) {
+    const b = document.createElement("div"); b.className = "bubble " + (m.role === "user" ? "user" : "agent"); b.dataset.done = "1";
+    b.innerHTML = `<small>${m.role === "user" ? "Aap" : "AK"}</small><span></span>`; b.querySelector(":scope > span").textContent = m.text;
+    chat.appendChild(b); convertBubble(b);
+  }
+  const n = document.createElement("div"); n.className = "bubble note"; n.textContent = "↑ Pichli baat-cheet — agli call isi ko yaad rakh kar chalegi";
+  chat.appendChild(n); requestAnimationFrame(() => chat.scrollTop = chat.scrollHeight);
+})();
+const WORKLET = `class Cap extends AudioWorkletProcessor{process(i){const c=i[0]&&i[0][0];if(c)this.port.postMessage(c.slice(0));return true}}registerProcessor("cap",Cap);`;
+async function startAgent() {
+  const st = $("#agentStatus"); status(st, "Connect ho raha hai…", "info");
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+  const inCtx = new AudioContext(), outCtx = new AudioContext({ sampleRate: 24000 });
+  await inCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" })));
+  const src = inCtx.createMediaStreamSource(stream), node = new AudioWorkletNode(inCtx, "cap"); src.connect(node);
+  const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/agent"); ws.binaryType = "arraybuffer";
+  agent = { stream, inCtx, outCtx, node, ws, nextTime: 0, sources: [], ready: false };
+  const ratio = inCtx.sampleRate / 16000; let buf = [];
+  node.port.onmessage = e => {
+    const f = e.data; let peak = 0; for (let i = 0; i < f.length; i++) peak = Math.max(peak, Math.abs(f[i]));
+    $("#micLevel").style.width = Math.min(100, peak * 140) + "%";
+    if (!agent?.ready) return;
+    for (let i = 0; i < f.length / ratio; i++) buf.push(f[Math.floor(i * ratio)]);
+    if (buf.length >= 1600) { const pcm = new Int16Array(buf.length); for (let i = 0; i < buf.length; i++) { const s = Math.max(-1, Math.min(1, buf[i])); pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff; } if (ws.readyState === 1) ws.send(pcm.buffer); buf = []; }
+  };
+  const remembered = chatLog.length > 0;
+  ws.onopen = () => ws.send(JSON.stringify({ voice: $("#agentVoice").value,
+    greet: remembered ? "(Call dobara jud gayi hai. Tumhe pichli baat-cheet yaad hai. Wapas aane par apne andaaz mein welcome karo aur pichli baat ka zikr karte hue aage barho — naye sire se taaruf nahi.)" : true,
+    system: ($("#agentPrompt").value + ($("#emoOn").checked ? emotionsBlock() : "")).replaceAll("{LANG}", $("#agentLang").value) + historyBlock() }));
+  if (remembered) chatNote("Agent ko pichli baat-cheet yaad hai — wahin se shuru.");
+  ws.onmessage = e => {
+    if (typeof e.data !== "string") return playPCM(e.data);
+    const m = JSON.parse(e.data);
+    if (m.type === "ready") { agent.ready = true; status(st, "🟢 Live — boliye!" + (m.mode && m.mode !== "emotions + Google search" ? ` (${m.mode} mode)` : "") + (m.model ? ` · ${m.model}` : ""), "ok"); }
+    else if (m.type === "notice") chatNote(m.message, m.error);
+    else if (m.type === "user") chatAdd("user", m.text);
+    else if (m.type === "agent") chatAdd("agent", m.text);
+    else if (m.type === "turn_complete") chatEndTurn();
+    else if (m.type === "interrupted") { agent.sources.forEach(s => { try { s.stop(); } catch {} }); agent.sources = []; agent.nextTime = 0; chatEndTurn(); }
+    else if (m.type === "error") { status(st, m.message, "err"); stopAgent(true); }
+  };
+  ws.onclose = () => { if (agent) stopAgent(true); };
+  $("#agentBtn").classList.add("live"); $("#agentBtn").textContent = "■";
+}
+function playPCM(ab) {
+  const a = agent; if (!a) return;
+  const i16 = new Int16Array(ab), f = new Float32Array(i16.length); for (let i = 0; i < i16.length; i++) f[i] = i16[i] / 32768;
+  const b = a.outCtx.createBuffer(1, f.length, 24000); b.copyToChannel(f, 0);
+  const s = a.outCtx.createBufferSource(); s.buffer = b; s.connect(a.outCtx.destination);
+  a.nextTime = Math.max(a.nextTime, a.outCtx.currentTime + 0.03); s.start(a.nextTime); a.nextTime += b.duration;
+  a.sources.push(s); s.onended = () => { a.sources = a.sources.filter(x => x !== s); };
+}
+function stopAgent(keepStatus) {
+  const a = agent; agent = null; if (!a) return;
+  chatEndTurn();  // save the last half-finished lines too
+  try { a.ws.close(); } catch {} a.stream.getTracks().forEach(t => t.stop()); a.inCtx.close(); a.outCtx.close();
+  $("#agentBtn").classList.remove("live"); $("#agentBtn").textContent = "🎙"; $("#micLevel").style.width = "0";
+  if (!keepStatus || $("#agentStatus").className.includes("ok")) status($("#agentStatus"), "Band ho gaya. Dobara shuru karne ke liye mic dabayein.");
+}
+$("#agentBtn").onclick = async () => { if (agent) return stopAgent(); try { await startAgent(); } catch (e) { status($("#agentStatus"), "Start nahi hua: " + e.message, "err"); stopAgent(true); } };
+
+/* ================= voice lab ================= */
+$("#dsBtn").onclick = async () => {
+  const st = $("#dsStatus"), btn = $("#dsBtn");
+  if (!$("#dsDesc").value.trim()) return status(st, "Awaz ki tafseel likhein.", "err");
+  const fd = new FormData();
+  fd.append("description", $("#dsDesc").value); fd.append("display_name", $("#dsName").value || "Designed Voice");
+  fd.append("gender", $("#dsGender").value); fd.append("language_code", $("#dsLang").value); fd.append("model", $("#model").value);
+  btn.disabled = true; status(st, "Voice design ho rahi hai…", "info");
+  try {
+    const d = await api("/api/voices/design", { method: "POST", body: fd });
+    status(st, `Voice ban gayi aur select ho gayi. ID: ${d.voice_id}`, "ok");
+    if (d.sample_url) { const au = $("#dsAudio"); au.src = d.sample_url; au.hidden = false; au.play(); }
+    store.set("voice", d.voice_id); await loadVoices(d.voice_id);
+  } catch (e) { status(st, e.message, "err"); }
+  btn.disabled = false;
+};
+const clips = { source: null, consent: null };
+async function toWav24k(blob, maxSec = 0) {
+  const ctx = new AudioContext(); const decoded = await ctx.decodeAudioData(await blob.arrayBuffer()); ctx.close();
+  const rate = 24000, dur = maxSec ? Math.min(decoded.duration, maxSec) : decoded.duration;
+  const off = new OfflineAudioContext(1, Math.ceil(dur * rate), rate);
+  const s = off.createBufferSource(); s.buffer = decoded; s.connect(off.destination); s.start();
+  const pcm = (await off.startRendering()).getChannelData(0);
+  const view = new DataView(new ArrayBuffer(44 + pcm.length * 2));
+  const w = (o, str) => [...str].forEach((c, i) => view.setUint8(o + i, c.charCodeAt(0)));
+  w(0, "RIFF"); view.setUint32(4, 36 + pcm.length * 2, true); w(8, "WAVE"); w(12, "fmt ");
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true); view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true); w(36, "data"); view.setUint32(40, pcm.length * 2, true);
+  for (let i = 0; i < pcm.length; i++) { const x = Math.max(-1, Math.min(1, pcm[i])); view.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true); }
+  return { wav: new Blob([view], { type: "audio/wav" }), seconds: dur, original: decoded.duration };
+}
+async function setClip(target, blob) {
+  const info = $("#" + target + "Info");
+  try {
+    const { wav, seconds, original } = await toWav24k(blob, target === "source" ? 29.5 : 0);
+    clips[target] = wav; const au = $("#" + target + "Prev"); au.src = URL.createObjectURL(wav); au.hidden = false;
+    let note = `${seconds.toFixed(1)} sec · 24kHz mono WAV ready`;
+    if (original > seconds + 0.1) note += ` (${original.toFixed(1)}s se 29.5s tak trim kiya)`;
+    if (target === "source" && seconds < 10) note += " ⚠ kam az kam 10 sec";
+    info.textContent = note;
+  } catch (e) { info.textContent = "Audio read nahi hua: " + e.message; }
+}
+let recorder = null;
+$$("button.rec").forEach(btn => btn.onclick = async () => {
+  if (recorder && recorder.state === "recording") return recorder.stop();
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true } });
+    const chunks = []; recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = async () => { stream.getTracks().forEach(t => t.stop()); btn.classList.remove("on"); btn.textContent = "● Record"; await setClip(btn.dataset.target, new Blob(chunks, { type: recorder.mimeType })); };
+    recorder.start(); btn.classList.add("on"); btn.textContent = "■ Stop";
+  } catch (e) { alert("Mic access nahi mila: " + e.message); }
+});
+$$("input[data-file]").forEach(inp => inp.onchange = () => inp.files[0] && setClip(inp.dataset.file, inp.files[0]));
+$("#cloneBtn").onclick = async () => {
+  const st = $("#cloneStatus");
+  if (!clips.source || !clips.consent) return status(st, "Dono recordings pehle add karein.", "err");
+  const fd = new FormData();
+  fd.append("display_name", $("#voiceName").value || "My Voice"); fd.append("model", $("#model").value);
+  fd.append("source_audio", clips.source, "source.wav"); fd.append("consent_audio", clips.consent, "consent.wav");
+  $("#cloneBtn").disabled = true; status(st, "Clone ho raha hai…", "info");
+  try { const d = await api("/api/voices/clone", { method: "POST", body: fd }); status(st, "Voice ban gayi! ID: " + d.voice_id, "ok"); await loadVoices(d.voice_id); }
+  catch (e) { status(st, e.message, "err"); }
+  $("#cloneBtn").disabled = false;
+};
+
+/* ================= old server guard ================= */
+function oldServerWarning() {
+  const w = document.createElement("div");
+  w.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:90;background:#5a1d1d;color:#fff;padding:12px 18px;font-size:13.5px;text-align:center";
+  w.textContent = "⚠ Purana server chal raha hai, is liye naye features kaam nahi karenge. Saari AK Voice Studio / cmd windows band karein, phir start.bat dobara chalayein.";
+  document.body.appendChild(w);
+}
+function needNewServer(r, field) {
+  if (r && r[field] === undefined) { oldServerWarning(); throw new Error("Server purana version chala raha hai — cmd window band karke start.bat dobara chalayein."); }
+}
+
+/* ================= init ================= */
+(function init() {
+  $("#speechLanguage").value = store.get("speechLanguage", "ur-PK");
+  script.value = store.get("script", ""); dlg.value = store.get("dlg", "");
+  $("#style").value = store.get("#style", ""); $("#voiceManual").value = store.get("#voiceManual", "");
+  $("#fname").value = store.get("#fname", "voiceover"); $("#pause").value = store.get("#pause", "300");
+  ["#spk1", "#spk2"].forEach(id => $(id).value = store.get(id, $(id).value));
+  $("#tagPanel").hidden = store.get("panel", false) !== true;
+  const cached = store.get("models", null);
+  renderModels(cached || CFG.known_models.map(id => ({ id, name: id, legacy: id.startsWith("gemini-2.5-") })), cached ? "cache" : "default");
+  renderVoiceSelects(store.get("voice", "Charon"));
+  paintSettings(); paintSubScript(); drawChips(); renderSegments();
+  showView(store.get("view", "studio"));
+  api("/api/config").then(c => {
+    CFG = c; if ($("#liveModel")) $("#liveModel").textContent = c.live_model;
+    if ((c.version || 1) < 2) oldServerWarning();
+    if (!cached) renderModels(c.known_models.map(id => ({ id, name: id, legacy: id.startsWith("gemini-2.5-") })), "default");
+    pollKeys();
+    if (!c.has_key) { $("#keysModal").hidden = false; } else { refreshModels(); loadVoices(store.get("voice")); }
+  }).catch(e => { console.error(e); toast("Server se rabta nahi hua: " + e.message); });
+})();
+</script>
+</body>
+</html>
